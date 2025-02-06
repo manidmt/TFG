@@ -1,0 +1,7 @@
+financial/
+!financial/momentum/
+sandbox/
+tests/
+requirements.txt
+requirements.local.txt
+setup.py
