@@ -1,0 +1,8 @@
+set PATH=/home/manidmt/Universidad/TFG/OTRI/my_env/bin
+set PYTHONPATH=..
+set CACHE=../../cache
+set DATA=../../data
+set MODEL=../../model
+source ../../my_env/bin/activate
+
+jupyter notebook
