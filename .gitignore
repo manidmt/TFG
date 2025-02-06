@@ -5,3 +5,4 @@ tests/
 requirements.txt
 requirements.local.txt
 setup.py
+!financial/momentum/**
