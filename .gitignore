@@ -1,4 +1,4 @@
-financial/
+financial/*
 !financial/momentum/
 sandbox/
 tests/
