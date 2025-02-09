@@ -40,6 +40,9 @@ class ExponentialScikitLearnModel(fm.ScikitLearnModel):
         '''
         Predict the target variable using the exponential regression model
         '''
+        if isinstance(X, list):
+            X = pd.DataFrame(X)
+        
         y_pred_log = self.model.predict(X.values)  
         return np.exp(y_pred_log)
 
@@ -60,7 +63,7 @@ class ExponentialRegressionModelFactory(ModelFactory):
                                       hyperparameters: dict, 
                                       input_descriptor: fd.DataDescriptor, 
                                       output_descriptor: fd.DataDescriptor) -> fm.Model:
-        # Usamos regresión lineal sobre los logaritmos de Y
+        
         model = sklearn.linear_model.LinearRegression()
         
         return ExponentialScikitLearnModel(model_id, input_descriptor, output_descriptor, model, hyperparameters)
