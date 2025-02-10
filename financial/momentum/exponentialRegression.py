@@ -46,12 +46,12 @@ class ExponentialScikitLearnModel(fm.ScikitLearnModel):
         y_pred_log = self.model.predict(X.values)  
         return np.exp(y_pred_log)
 
-    def score(self, X_test: pd.DataFrame, y_test: pd.Series):
+#    def score(self, X_test: pd.DataFrame, y_test: pd.Series):
         '''
         Compute the R2 score of the model
         '''
-        y_test_log = np.log(y_test)
-        return self.model.score(X_test.values, y_test_log.values)
+#        y_test_log = np.log(y_test)
+#        return self.model.score(X_test.values, y_test_log.values)
 
 class ExponentialRegressionModelFactory(ModelFactory):
     '''
