@@ -10,6 +10,7 @@ import pandas as pd
 
 import financial.data as fd
 import financial.model as fm
+import financial.momentum.exponentialRegression as expReg
 from financial.lab.models import ModelFactory
 from sklearn.metrics import r2_score
 
@@ -43,7 +44,7 @@ def create_local_model(factory: ModelFactory,
 def store_momentum_data(ticker, 
                         factory: ModelFactory,
                         hyperparameters: dict, 
-                        model_name="exponential",
+                        model_name: str ="exponential",
                         ds: fd.DataStore = None, 
                         cache_path: str = None, 
                         lookahead: int = 20, 
@@ -68,29 +69,109 @@ def store_momentum_data(ticker,
     momentum_series = pd.Series(index=data.index)
     r2_series = pd.Series(index=data.index)
 
+    true_values = []
+    predicted_values = []
+
+
+    '''
+    DEPURANDO CON PRINTS:
+    '''
+
+
     for index in range(len(data) - horizon):
         model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
 
         beta = model.model.coef_[0]  # Pendiente de la regresión exponencial
         y_true = pd.Series([data.iloc[index + lookahead]])  # Valor real futuro
         y_pred = pd.Series([model.predict([[lookahead]])])  # Predicción del modelo
-        r2 = r2_score(y_true, y_pred)  # Coeficiente de determinación
 
-
-        # Avoid NaN values
-        if pd.isna(beta) or pd.isna(r2):
-            continue
-        
+        #print("Beta", beta)
+        true_values.append(y_true)
+        predicted_values.append(y_pred)
         momentum_series.iloc[index + lookahead] = beta
-        r2_series.iloc[index + lookahead] = r2
+
+        print(f"Índice actual: {index}, Índice destino: {data.index[index + lookahead]}, Beta: {beta}")
+        print(momentum_series.loc[data.index[index + lookahead]])
+
+    print("Índice de momentum_series:", momentum_series.index[:10])  
+    print("Índice de data:", data.index[:10])
+
+
+    print("True values: ", len(true_values))
+    print("Predicted values: ", len(predicted_values))
+
+    r2 = r2_score(true_values, predicted_values)
+    r2_series[:] = r2
+
+
+    '''
+    
+    '''
+
 
     # Guardar las series en FileCache
-    momentum_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}.pkl")
-    r2_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@r2.pkl")
+    # model_cache_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}")
+    momentum_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}.pkl")
+    r2_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@r2.pkl")
 
+
+    momentum_dir = os.path.dirname(momentum_path)
+    if not os.path.exists(momentum_dir):
+        os.makedirs(momentum_dir)
     with open(momentum_path, 'wb') as file:
         pickle.dump(momentum_series, file)
 
+    r2_dir = os.path.dirname(r2_path)
+    if not os.path.exists(r2_dir):
+        os.makedirs(r2_dir)
     with open(r2_path, 'wb') as file:
         pickle.dump(r2_series, file)
 
+
+
+
+def local_regression_features(ds: fd.DataStore, ticker: str) -> fd.Set:
+    '''
+    Defines the input features for local regression models.
+    '''
+    features = fd.Set('Local autoregressive model features')    
+    variable = fd.Variable(ticker)
+    features.append(variable)
+    return features
+
+
+
+'''
+def local_regression_features_wrapper(ds: fd.DataStore, ticker: str) -> fd.Set:
+    ''
+    Wrapper function to generate local regression features.
+    This is required by ModelFactory when creating a model.
+    ''
+    return local_regression_features(ds, ticker)
+'''
+
+
+def store_exponentialModel_data(ticker,
+                                ds: fd.DataStore = None, 
+                                cache_path: str = None,
+                                lookahead: int = 20):
+    
+
+    hyperparameters = {
+        "input": {
+            "features": "local_regression_features_wrapper"
+            # "normalization": { "method": "z-score", "start_index": start_date, "end_index": end_date }
+            },
+        "output": {
+            "target": [ticker],
+            "lookahead": lookahead,
+            "prediction": "absolute" # "absolute"|"relative"
+            # "normalization": { "method": "z-score", "start_index": start_date, "end_index": end_date }
+            },    
+    }
+
+    store_momentum_data(ticker, expReg.ExponentialRegressionModelFactory(), hyperparameters, "exponential", lookahead=lookahead, ds=ds, cache_path=cache_path)
+
+
+
+    
