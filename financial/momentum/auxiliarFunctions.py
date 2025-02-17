@@ -7,6 +7,7 @@ Auxiliar Functions needed for the main code
 import os
 import pickle
 import pandas as pd
+import numpy as np
 
 import financial.data as fd
 import financial.model as fm
@@ -66,7 +67,7 @@ def store_momentum_data(ticker,
     data = ds.get_data(ticker)  
 
     # Initialize series
-    momentum_series = pd.Series(index=data.index)
+    momentum_series = pd.Series(data=np.nan, index=data.index, dtype=float)
     r2_series = pd.Series(index=data.index)
 
     true_values = []
@@ -88,14 +89,16 @@ def store_momentum_data(ticker,
         #print("Beta", beta)
         true_values.append(y_true)
         predicted_values.append(y_pred)
-        momentum_series.iloc[index + lookahead] = beta
-
-        print(f"Índice actual: {index}, Índice destino: {data.index[index + lookahead]}, Beta: {beta}")
+        # momentum_series.iloc[index + lookahead] = beta
+        momentum_series.at[data.index[index + lookahead]] = beta
+        
+        # print(f"Índice actual: {index}, Índice destino: {data.index[index + lookahead]}, Beta: {beta}")
         print(momentum_series.loc[data.index[index + lookahead]])
 
     print("Índice de momentum_series:", momentum_series.index[:10])  
     print("Índice de data:", data.index[:10])
 
+    print("Tail 1 of momentum series before saving:\n", momentum_series.tail())
 
     print("True values: ", len(true_values))
     print("Predicted values: ", len(predicted_values))
@@ -105,8 +108,18 @@ def store_momentum_data(ticker,
 
 
     '''
-    
+     # Alternativa: convertir a diccionario y regenerar la serie
+    momentum_dict = dict(momentum_series)  # Convertir a diccionario
+    momentum_series = pd.Series(momentum_dict)  # Reconstruir la serie
     '''
+
+    # Forzar actualizaci�n de la serie antes de guardarla
+    momentum_series = momentum_series.dropna()  # Eliminar valores NaN
+    momentum_series = momentum_series.copy()  # Asegurar que no es una vista de otra
+
+   
+
+
 
 
     # Guardar las series en FileCache
@@ -114,6 +127,7 @@ def store_momentum_data(ticker,
     momentum_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}.pkl")
     r2_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@r2.pkl")
 
+    print("Tail 2 of momentum series before saving:\n", momentum_series.tail())
 
     momentum_dir = os.path.dirname(momentum_path)
     if not os.path.exists(momentum_dir):
