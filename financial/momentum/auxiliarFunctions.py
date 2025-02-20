@@ -64,7 +64,10 @@ def store_momentum_data(ticker,
         ds = fd.CachedDataStore(path=os.environ["DATA"], 
                                 cache=FileCache(cache_path=cache_path+"/", update_strategy=NoUpdateStrategy()))
 
-    data = ds.get_data(ticker)  
+    start_date = '1990-01-01'
+    end_date = '2024-12-31'
+    data = ds.get_data(ticker, start_date, end_date)
+    #data = ds.get_data(ticker)  
 
     # Initialize series
     momentum_series = pd.Series(data=np.nan, index=data.index, dtype=float)
@@ -82,19 +85,23 @@ def store_momentum_data(ticker,
     for index in range(len(data) - horizon):
         model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
 
+        forecast = pd.Series(index=data.index)
+        forecast.iloc[index+horizon] = model.predict([[lookahead]])
+
         beta = model.model.coef_[0]  # Pendiente de la regresión exponencial
         y_true = pd.Series([data.iloc[index + lookahead]])  # Valor real futuro
-        y_pred = pd.Series([model.predict([[lookahead]])])  # Predicción del modelo
+        y_pred = pd.Series([model.predict([[lookahead]])])[0]  # Predicción del modelo
 
         #print("Beta", beta)
         true_values.append(y_true)
         predicted_values.append(y_pred)
         # momentum_series.iloc[index + lookahead] = beta
         momentum_series.at[data.index[index + lookahead]] = beta
-        
+    '''    
         # print(f"Índice actual: {index}, Índice destino: {data.index[index + lookahead]}, Beta: {beta}")
         print(momentum_series.loc[data.index[index + lookahead]])
-
+    
+        
     print("Índice de momentum_series:", momentum_series.index[:10])  
     print("Índice de data:", data.index[:10])
 
@@ -102,28 +109,45 @@ def store_momentum_data(ticker,
 
     print("True values: ", len(true_values))
     print("Predicted values: ", len(predicted_values))
+    true_values = np.array(true_values).reshape(-1, 1)
+    predicted_values = np.array(predicted_values).reshape(-1, 1)
+    '''
+
+    print("Estructura de true_values:", np.array(true_values).shape)
+    print("Estructura de predicted_values:", np.array(predicted_values).shape)
+    
+    true_values = np.array(true_values).reshape(-1, 1)
+    predicted_values = np.array(predicted_values).reshape(-1, 1)
+
+    print("?? Primeros 10 valores de true_values:", true_values[:10].flatten())
+    print("?? Primeros 10 valores de predicted_values:", predicted_values[:10].flatten())
+
+    print("?? Ultimos 10 valores de true_values:", true_values[-10:].flatten())
+    print("?? Ultimos 10 valores de predicted_values:", predicted_values[-10:].flatten())
 
     r2 = r2_score(true_values, predicted_values)
+    forecast = forecast.shift(lookahead)
+    forecast = forecast.dropna() 
+    forecast = forecast.copy()
+    target = data[horizon+lookahead:]
+    r2 = r2_score(target, forecast)
+
+
     r2_series[:] = r2
 
-
     '''
-     # Alternativa: convertir a diccionario y regenerar la serie
+    # Alternativa: convertir a diccionario y regenerar la serie
     momentum_dict = dict(momentum_series)  # Convertir a diccionario
     momentum_series = pd.Series(momentum_dict)  # Reconstruir la serie
     '''
 
-    # Forzar actualizaci�n de la serie antes de guardarla
+    # Forzar actualizacion de la serie antes de guardarla
     momentum_series = momentum_series.dropna()  # Eliminar valores NaN
     momentum_series = momentum_series.copy()  # Asegurar que no es una vista de otra
-
+    # Equiv =? momentum_series = momentum_series.dropna().copy() o momentum_series = pd.Series(momentum_series.dropna().to_dict())
    
-
-
-
-
     # Guardar las series en FileCache
-    # model_cache_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}")
+   
     momentum_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}.pkl")
     r2_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@r2.pkl")
 
