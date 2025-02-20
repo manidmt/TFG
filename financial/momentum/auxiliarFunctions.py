@@ -81,27 +81,25 @@ def store_momentum_data(ticker,
     DEPURANDO CON PRINTS:
     '''
 
+    forecast = pd.Series(index=data.index)
 
     for index in range(len(data) - horizon):
         model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
 
-        forecast = pd.Series(index=data.index)
-        forecast.iloc[index+horizon] = model.predict([[lookahead]])
-
         beta = model.model.coef_[0]  # Pendiente de la regresión exponencial
-        y_true = pd.Series([data.iloc[index + lookahead]])  # Valor real futuro
-        y_pred = pd.Series([model.predict([[lookahead]])])[0]  # Predicción del modelo
-
+        # y_true = pd.Series([data.iloc[index + lookahead]])  # Valor real futuro
+        # y_pred = pd.Series([model.predict([[lookahead]])])[0]  # Predicción del modelo
+        forecast.iloc[index + horizon] = model.predict([[lookahead]])
         #print("Beta", beta)
-        true_values.append(y_true)
-        predicted_values.append(y_pred)
+        # true_values.append(y_true)
+        # predicted_values.append(y_pred)
         # momentum_series.iloc[index + lookahead] = beta
         momentum_series.at[data.index[index + lookahead]] = beta
     '''    
         # print(f"Índice actual: {index}, Índice destino: {data.index[index + lookahead]}, Beta: {beta}")
         print(momentum_series.loc[data.index[index + lookahead]])
     
-        
+
     print("Índice de momentum_series:", momentum_series.index[:10])  
     print("Índice de data:", data.index[:10])
 
@@ -111,7 +109,6 @@ def store_momentum_data(ticker,
     print("Predicted values: ", len(predicted_values))
     true_values = np.array(true_values).reshape(-1, 1)
     predicted_values = np.array(predicted_values).reshape(-1, 1)
-    '''
 
     print("Estructura de true_values:", np.array(true_values).shape)
     print("Estructura de predicted_values:", np.array(predicted_values).shape)
@@ -125,13 +122,33 @@ def store_momentum_data(ticker,
     print("?? Ultimos 10 valores de true_values:", true_values[-10:].flatten())
     print("?? Ultimos 10 valores de predicted_values:", predicted_values[-10:].flatten())
 
-    r2 = r2_score(true_values, predicted_values)
     forecast = forecast.shift(lookahead)
     forecast = forecast.dropna() 
     forecast = forecast.copy()
     target = data[horizon+lookahead:]
     r2 = r2_score(target, forecast)
+    true_values = np.array(true_values).reshape(-1)  # Convertir a numpy array y a 1D
+    predicted_values = np.array(predicted_values).reshape(-1)  # Convertir también
 
+    true_values = pd.Series(true_values, index=data.index[lookahead:])  # Asignar índice datetime
+    predicted_values = pd.Series(predicted_values, index=data.index[:-lookahead])  # Asignar índice datetime
+
+    predicted_series = predicted_values.shift(lookahead)  # Aplicamos el desplazamiento
+    predicted_series = predicted_series.dropna()  # Eliminamos los valores NaN
+    true_values = true_values[lookahead:]  # Ajustamos true_values para que coincida con predicted_series
+
+    # ✅ Asegurar que los índices son compatibles
+    print("🔍 Índices de true_values después del ajuste:", true_values.index[:10])
+    print("🔍 Índices de predicted_series después del shift:", predicted_series.index[:10])
+
+    # ✅ Ahora los índices deben ser iguales
+    r2 = r2_score(true_values, predicted_series)
+    '''
+
+    forecast = forecast.shift(lookahead).dropna()
+    target = data[horizon+lookahead:]
+    r2 = r2_score(target, forecast)
+    
 
     r2_series[:] = r2
 
