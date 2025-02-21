@@ -58,8 +58,8 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
         '''
         Returns a DataDescriptor that accesses the precomputed Beta * R² values.
         '''
-        momentum_descriptor = fd.Variable(f"model/momentum/{self.model}/{input_descriptor}")
+        slope_descriptor = fd.Variable(f"model/momentum/{self.model}/{input_descriptor}@slope")
         r2_descriptor = fd.Variable(f"model/momentum/{self.model}/{input_descriptor}@r2")
 
-        return fd.Mult([momentum_descriptor, r2_descriptor])
+        return fd.Product().of([slope_descriptor, r2_descriptor])
 
