@@ -70,111 +70,54 @@ def store_momentum_data(ticker,
     #data = ds.get_data(ticker)  
 
     # Initialize series
-    momentum_series = pd.Series(data=np.nan, index=data.index, dtype=float)
+    slope_series = pd.Series(data=np.nan, index=data.index, dtype=float)
     r2_series = pd.Series(index=data.index)
-
-    true_values = []
-    predicted_values = []
-
-
-    '''
-    DEPURANDO CON PRINTS:
-    '''
-
     forecast = pd.Series(index=data.index)
+    relative_predicted_values = pd.Series(index=data.index)
 
     for index in range(len(data) - horizon):
         model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
 
         beta = model.model.coef_[0]  # Pendiente de la regresión exponencial
-        # y_true = pd.Series([data.iloc[index + lookahead]])  # Valor real futuro
-        # y_pred = pd.Series([model.predict([[lookahead]])])[0]  # Predicción del modelo
         forecast.iloc[index + horizon] = model.predict([[lookahead]])
-        #print("Beta", beta)
-        # true_values.append(y_true)
-        # predicted_values.append(y_pred)
-        # momentum_series.iloc[index + lookahead] = beta
-        momentum_series.at[data.index[index + lookahead]] = beta
-    '''    
-        # print(f"Índice actual: {index}, Índice destino: {data.index[index + lookahead]}, Beta: {beta}")
-        print(momentum_series.loc[data.index[index + lookahead]])
+        slope_series.at[data.index[index]] = beta
+        relative_predicted_values[data.index[index]] = forecast.iloc[index + horizon] / data.iloc[index + horizon] * 100 if data.iloc[index + horizon] != 0 else 0
+
+
+        #print(f"📅 Índice de almacenamiento: {data.index[index]}, índice donde se almacena predicción en forecast {index + horizon}")
+        # print(f"📅 Índice de predicción (donde se guarda ahora): {data.index[index + lookahead]}")
+
     
-
-    print("Índice de momentum_series:", momentum_series.index[:10])  
-    print("Índice de data:", data.index[:10])
-
-    print("Tail 1 of momentum series before saving:\n", momentum_series.tail())
-
-    print("True values: ", len(true_values))
-    print("Predicted values: ", len(predicted_values))
-    true_values = np.array(true_values).reshape(-1, 1)
-    predicted_values = np.array(predicted_values).reshape(-1, 1)
-
-    print("Estructura de true_values:", np.array(true_values).shape)
-    print("Estructura de predicted_values:", np.array(predicted_values).shape)
-    
-    true_values = np.array(true_values).reshape(-1, 1)
-    predicted_values = np.array(predicted_values).reshape(-1, 1)
-
-    print("?? Primeros 10 valores de true_values:", true_values[:10].flatten())
-    print("?? Primeros 10 valores de predicted_values:", predicted_values[:10].flatten())
-
-    print("?? Ultimos 10 valores de true_values:", true_values[-10:].flatten())
-    print("?? Ultimos 10 valores de predicted_values:", predicted_values[-10:].flatten())
-
-    forecast = forecast.shift(lookahead)
-    forecast = forecast.dropna() 
-    forecast = forecast.copy()
-    target = data[horizon+lookahead:]
-    r2 = r2_score(target, forecast)
-    true_values = np.array(true_values).reshape(-1)  # Convertir a numpy array y a 1D
-    predicted_values = np.array(predicted_values).reshape(-1)  # Convertir también
-
-    true_values = pd.Series(true_values, index=data.index[lookahead:])  # Asignar índice datetime
-    predicted_values = pd.Series(predicted_values, index=data.index[:-lookahead])  # Asignar índice datetime
-
-    predicted_series = predicted_values.shift(lookahead)  # Aplicamos el desplazamiento
-    predicted_series = predicted_series.dropna()  # Eliminamos los valores NaN
-    true_values = true_values[lookahead:]  # Ajustamos true_values para que coincida con predicted_series
-
-    # ✅ Asegurar que los índices son compatibles
-    print("🔍 Índices de true_values después del ajuste:", true_values.index[:10])
-    print("🔍 Índices de predicted_series después del shift:", predicted_series.index[:10])
-
-    # ✅ Ahora los índices deben ser iguales
-    r2 = r2_score(true_values, predicted_series)
-    '''
-
     forecast = forecast.shift(lookahead).dropna()
     target = data[horizon+lookahead:]
     r2 = r2_score(target, forecast)
-    
-
     r2_series[:] = r2
 
-    '''
-    # Alternativa: convertir a diccionario y regenerar la serie
-    momentum_dict = dict(momentum_series)  # Convertir a diccionario
-    momentum_series = pd.Series(momentum_dict)  # Reconstruir la serie
-    '''
 
     # Forzar actualizacion de la serie antes de guardarla
-    momentum_series = momentum_series.dropna()  # Eliminar valores NaN
-    momentum_series = momentum_series.copy()  # Asegurar que no es una vista de otra
+    slope_series = slope_series.dropna()  # Eliminar valores NaN
+    slope_series = slope_series.copy()  # Asegurar que no es una vista de otra
     # Equiv =? momentum_series = momentum_series.dropna().copy() o momentum_series = pd.Series(momentum_series.dropna().to_dict())
    
     # Guardar las series en FileCache
    
-    momentum_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}.pkl")
+    prediction_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}.pkl")
+    slope_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@slope.pkl")
     r2_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@r2.pkl")
 
-    print("Tail 2 of momentum series before saving:\n", momentum_series.tail())
+    #print("Tail 2 of momentum series before saving:\n", momentum_series.tail())
 
-    momentum_dir = os.path.dirname(momentum_path)
+    momentum_dir = os.path.dirname(prediction_path)
     if not os.path.exists(momentum_dir):
         os.makedirs(momentum_dir)
-    with open(momentum_path, 'wb') as file:
-        pickle.dump(momentum_series, file)
+    with open(prediction_path, 'wb') as file:
+        pickle.dump(relative_predicted_values, file)
+
+    momentum_dir = os.path.dirname(slope_path)
+    if not os.path.exists(momentum_dir):
+        os.makedirs(momentum_dir)
+    with open(slope_path, 'wb') as file:
+        pickle.dump(slope_series, file)
 
     r2_dir = os.path.dirname(r2_path)
     if not os.path.exists(r2_dir):
