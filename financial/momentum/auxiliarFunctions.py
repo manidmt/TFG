@@ -77,17 +77,15 @@ def store_momentum_data(ticker,
 
     for index in range(len(data) - horizon):
         model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
-
+        
         beta = model.model.coef_[0]  # Pendiente de la regresión exponencial
         forecast.iloc[index + horizon] = model.predict([[lookahead]])
-        slope_series.at[data.index[index]] = beta
-        relative_predicted_values[data.index[index]] = forecast.iloc[index + horizon] / data.iloc[index + horizon] * 100 if data.iloc[index + horizon] != 0 else 0
+        slope_series.at[data.index[index + horizon]] = beta
 
-
-        #print(f"📅 Índice de almacenamiento: {data.index[index]}, índice donde se almacena predicción en forecast {index + horizon}")
-        # print(f"📅 Índice de predicción (donde se guarda ahora): {data.index[index + lookahead]}")
-
+        #print(f"Dia: {data.index[index+horizon]}, Valor real: {data.iloc[index + horizon]}, Predicción: {forecast.iloc[index + horizon]}")
+        relative_predicted_values[data.index[index+horizon]] = ((forecast.iloc[index + horizon] / data.iloc[index + horizon]) * 100) - 100 if data.iloc[index + horizon] != 0 else 0
     
+    relative_predicted_values = relative_predicted_values.dropna()
     forecast = forecast.shift(lookahead).dropna()
     target = data[horizon+lookahead:]
     r2 = r2_score(target, forecast)
@@ -98,9 +96,9 @@ def store_momentum_data(ticker,
     slope_series = slope_series.dropna()  # Eliminar valores NaN
     slope_series = slope_series.copy()  # Asegurar que no es una vista de otra
     # Equiv =? momentum_series = momentum_series.dropna().copy() o momentum_series = pd.Series(momentum_series.dropna().to_dict())
-   
+    
     # Guardar las series en FileCache
-   
+    
     prediction_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}.pkl")
     slope_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@slope.pkl")
     r2_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@r2.pkl")
