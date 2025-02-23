@@ -1,5 +1,7 @@
 financial/*
 !financial/momentum/
+jupyter/*
+!jupyter/TFG_testing
 sandbox/
 tests/
 requirements.txt
