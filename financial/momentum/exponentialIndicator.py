@@ -5,6 +5,7 @@ Exponential Indicator -- Clenow
 '''
 
 from financial.strategies.technical.indicator import TechnicalIndicator
+from financial.strategies.technical.indicator import Mult
 
 import financial.data as fd
 
@@ -16,6 +17,7 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
 
     DEFAULT_LOOKAHEAD = 20
     DEFAULT_HORIZON = 90
+    MSCI_WORLD = 'URTH'
 
     def __init__(self, model='exponential'):
         self.lookahead = ExponentialRegressionIndicator.DEFAULT_LOOKAHEAD   # Predicción a 20 días                          | Clenow
@@ -58,8 +60,15 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
         '''
         Returns a DataDescriptor that accesses the precomputed Beta * R² values.
         '''
-        slope_descriptor = fd.Variable(f"model/momentum/{self.model}/{input_descriptor}@slope")
-        r2_descriptor = fd.Variable(f"model/momentum/{self.model}/{input_descriptor}@r2")
+        try:
+            slope_descriptor = fd.Variable(f"model/momentum/{self.model}/{input_descriptor}@slope")
+        except:
+            slope_descriptor = fd.Variable(f"model/momentum/{self.model}/{self.MSCI_WORLD}@slope")
 
-        return fd.Product().of([slope_descriptor, r2_descriptor])
+        try:
+            r2_descriptor = fd.Variable(f"model/momentum/{self.model}/{input_descriptor}@r2")
+        except:
+            r2_descriptor = fd.Variable(f"model/momentum/{self.model}/{self.MSCI_WORLD}@r2")
+        
+        return Mult().of([slope_descriptor, r2_descriptor])
 
