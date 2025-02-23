@@ -5,7 +5,7 @@ Exponential Indicator -- Clenow
 '''
 
 from financial.strategies.technical.indicator import TechnicalIndicator
-from financial.strategies.technical.indicator import Mult
+from financial.strategies.technical.indicator import Wrapper
 
 import financial.data as fd
 
@@ -58,17 +58,27 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
 
     def get_data_descriptor(self, input_descriptor: fd.DataDescriptor) -> fd.DataDescriptor:
         '''
-        Returns a DataDescriptor that accesses the precomputed Beta * R² values.
+        Returns a DataDescriptor accessing precomputed Beta * R² values.
+        Uses MSCI World (URTH) as fallback if specific ticker is not found.
         '''
-        try:
-            slope_descriptor = fd.Variable(f"model/momentum/{self.model}/{input_descriptor}@slope")
-        except:
-            slope_descriptor = fd.Variable(f"model/momentum/{self.model}/{self.MSCI_WORLD}@slope")
 
-        try:
-            r2_descriptor = fd.Variable(f"model/momentum/{self.model}/{input_descriptor}@r2")
-        except:
-            r2_descriptor = fd.Variable(f"model/momentum/{self.model}/{self.MSCI_WORLD}@r2")
-        
-        return Mult().of([slope_descriptor, r2_descriptor])
+        ticker_str = str(input_descriptor)
+
+        # Creando Wrappers con la misma lógica usada por Fernando
+        slope_wrapper = Wrapper().set_parameters({
+            'ticker': f"model/momentum/{self.model}/{ticker_str}@slope.pkl",
+            'default': f"model/momentum/{self.model}/{self.MSCI_WORLD}@slope.pkl"
+        })
+
+        r2_wrapper = Wrapper().set_parameters({
+            'ticker': f"model/momentum/{self.model}/{ticker_str}@r2.pkl",
+            'default': f"model/momentum/{self.model}/{self.MSCI_WORLD}@r2.pkl"
+        })
+
+        # Creamos el producto compuesto usando directamente los wrappers como lo hace Fernando
+        composite = fd.Product()
+        composite.append(slope_wrapper.get_data_descriptor(input_descriptor))
+        composite.append(r2_wrapper.get_data_descriptor(input_descriptor))
+
+        return composite
 
