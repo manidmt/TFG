@@ -6,6 +6,7 @@ Exponential Indicator -- Clenow
 
 from financial.strategies.technical.indicator import TechnicalIndicator
 from financial.strategies.technical.indicator import Wrapper
+import os
 
 import financial.data as fd
 
@@ -61,24 +62,44 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
         Returns a DataDescriptor accessing precomputed Beta * R² values.
         Uses MSCI World (URTH) as fallback if specific ticker is not found.
         '''
-
+        
         ticker_str = str(input_descriptor)
 
-        # Creando Wrappers con la misma lógica usada por Fernando
         slope_wrapper = Wrapper().set_parameters({
-            'ticker': f"model/momentum/{self.model}/{ticker_str}@slope.pkl",
-            'default': f"model/momentum/{self.model}/{self.MSCI_WORLD}@slope.pkl"
+            'ticker': f"model-momentum-{self.model}-{ticker_str}@slope",
+            'default': f"model-momentum-{self.model}-{self.MSCI_WORLD}@slope"
         })
 
         r2_wrapper = Wrapper().set_parameters({
-            'ticker': f"model/momentum/{self.model}/{ticker_str}@r2.pkl",
-            'default': f"model/momentum/{self.model}/{self.MSCI_WORLD}@r2.pkl"
+            'ticker': f"model-momentum-{self.model}-{ticker_str}@r2",
+            'default': f"model-momentum-{self.model}-{self.MSCI_WORLD}@r2"
         })
 
-        # Creamos el producto compuesto usando directamente los wrappers como lo hace Fernando
         composite = fd.Product()
         composite.append(slope_wrapper.get_data_descriptor(input_descriptor))
         composite.append(r2_wrapper.get_data_descriptor(input_descriptor))
 
         return composite
+        
+        '''
+        ticker_str = str(input_descriptor)
 
+        base_path = f"{os.environ['CACHE']}/model/momentum/{self.model}"
+        slope_path = f"{base_path}/{ticker_str}@slope.pkl"
+        r2_path = f"{base_path}/{ticker_str}@r2.pkl"
+
+        # Comprobamos explícitamente si los archivos existen
+        slope_ticker = (f"model/momentum/{self.model}/{ticker_str}@slope" 
+                        if os.path.exists(slope_path) else 
+                        f"model/momentum/{self.model}/{self.MSCI_WORLD}@slope")
+
+        r2_ticker = (f"model/momentum/{self.model}/{ticker_str}@r2" 
+                    if os.path.exists(r2_path) else 
+                    f"model/momentum/{self.model}/{self.MSCI_WORLD}@r2")
+
+        composite = fd.Product()
+        composite.append(fd.Variable(slope_ticker))
+        composite.append(fd.Variable(r2_ticker))
+
+        return composite
+        '''

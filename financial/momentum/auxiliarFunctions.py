@@ -99,6 +99,23 @@ def store_momentum_data(ticker,
     
     # Guardar las series en FileCache
     
+
+    # Guardado usando el formato esperado
+    prediction_path = os.path.join(cache_path, f"model_momentum-{model_name}-{ticker}")
+    slope_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@slope")
+    r2_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@r2")
+
+    with open(prediction_path, 'wb') as file:
+        pickle.dump(relative_predicted_values, file)
+
+    with open(slope_path, 'wb') as file:
+        pickle.dump(slope_series, file)
+
+    with open(r2_path, 'wb') as file:
+        pickle.dump(r2_series, file)
+
+
+    '''
     prediction_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}.pkl")
     slope_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@slope.pkl")
     r2_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@r2.pkl")
@@ -122,7 +139,7 @@ def store_momentum_data(ticker,
         os.makedirs(r2_dir)
     with open(r2_path, 'wb') as file:
         pickle.dump(r2_series, file)
-
+    '''
 
 
 
