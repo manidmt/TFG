@@ -63,6 +63,9 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
         Uses MSCI World (URTH) as fallback if specific ticker is not found.
         '''
         
+
+        # Sería mejor acceder a la carpetea model/momentum/{self.model}/{ticker} en vez de los -
+
         ticker_str = str(input_descriptor)
 
         slope_wrapper = Wrapper().set_parameters({

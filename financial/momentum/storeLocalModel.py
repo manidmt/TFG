@@ -1,5 +1,5 @@
 '''
-Auxiliar Functions needed for the main code
+Storing and computing local model data for a given ticker.
 
 @author: Manuel Díaz-Meco (manidmt5@gmail.com)
 '''
@@ -64,6 +64,8 @@ def store_momentum_data(ticker,
         ds = fd.CachedDataStore(path=os.environ["DATA"], 
                                 cache=FileCache(cache_path=cache_path+"/", update_strategy=NoUpdateStrategy()))
 
+
+    # Fechas predefinidas... ¿cambiar a fechas generales?
     start_date = '1990-01-01'
     end_date = '2024-12-31'
     data = ds.get_data(ticker, start_date, end_date)
@@ -78,7 +80,7 @@ def store_momentum_data(ticker,
     for index in range(len(data) - horizon):
         model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
         
-        beta = model.model.coef_[0]  # Pendiente de la regresión exponencial
+        beta = model.model.coef_[0]                                         # Slope of the regression line
         forecast.iloc[index + horizon] = model.predict([[lookahead]])
         slope_series.at[data.index[index + horizon]] = beta
 
@@ -97,10 +99,7 @@ def store_momentum_data(ticker,
     slope_series = slope_series.copy()  # Asegurar que no es una vista de otra
     # Equiv =? momentum_series = momentum_series.dropna().copy() o momentum_series = pd.Series(momentum_series.dropna().to_dict())
     
-    # Guardar las series en FileCache
-    
-
-    # Guardado usando el formato esperado
+    # Save the series
     prediction_path = os.path.join(cache_path, f"model_momentum-{model_name}-{ticker}")
     slope_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@slope")
     r2_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@r2")
@@ -115,6 +114,8 @@ def store_momentum_data(ticker,
         pickle.dump(r2_series, file)
 
 
+
+    # model/momentum/{model_name}/{ticker} no funcionaba --> cambio a -  ¿solución modificando el DataStore?
     '''
     prediction_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}.pkl")
     slope_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@slope.pkl")
