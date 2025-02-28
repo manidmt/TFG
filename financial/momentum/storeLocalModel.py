@@ -14,6 +14,8 @@ import financial.model as fm
 import financial.momentum.exponentialRegression as expReg
 from financial.lab.models import ModelFactory
 from sklearn.metrics import r2_score
+from financial.io.cache import NoUpdateStrategy
+from financial.io.file.cache import FileCache
 
 
 def create_local_model(factory: ModelFactory,
@@ -42,12 +44,14 @@ def create_local_model(factory: ModelFactory,
 
 
 
-def store_momentum_data(ticker, 
+def storeLocal_data(ticker, 
                         factory: ModelFactory,
                         hyperparameters: dict, 
                         model_name: str ="exponential",
                         ds: fd.DataStore = None, 
                         cache_path: str = None, 
+                        start_date: str = '1990-01-01',
+                        end_date: str = '2024-12-31',
                         lookahead: int = 20, 
                         horizon: int = 90):
     '''
@@ -57,17 +61,13 @@ def store_momentum_data(ticker,
     cache_path = os.environ.get("CACHE", "./cache") if cache_path is None else cache_path
     # Si no se pasa un DataStore, usar el definido por defecto
     if ds is None:
-        from financial.io.cache import NoUpdateStrategy
-        from financial.io.file.cache import FileCache
-
         
         ds = fd.CachedDataStore(path=os.environ["DATA"], 
                                 cache=FileCache(cache_path=cache_path+"/", update_strategy=NoUpdateStrategy()))
 
 
     # Fechas predefinidas... ¿cambiar a fechas generales?
-    start_date = '1990-01-01'
-    end_date = '2024-12-31'
+
     data = ds.get_data(ticker, start_date, end_date)
     #data = ds.get_data(ticker)  
 
@@ -144,11 +144,11 @@ def store_momentum_data(ticker,
 
 
 
-def local_regression_features(ds: fd.DataStore, ticker: str) -> fd.Set:
+def local_features(ds: fd.DataStore, ticker: str) -> fd.Set:
     '''
     Defines the input features for local regression models.
     '''
-    features = fd.Set('Local autoregressive model features')    
+    features = fd.Set('Local model features')    
     variable = fd.Variable(ticker)
     features.append(variable)
     return features

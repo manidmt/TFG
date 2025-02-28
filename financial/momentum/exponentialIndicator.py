@@ -18,8 +18,8 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
 
     DEFAULT_LOOKAHEAD = 20
     DEFAULT_HORIZON = 90
-    MSCI_WORLD = 'URTH'
-
+    DEFAULT_TICKER = '^GSPC'
+    
     def __init__(self, model='exponential'):
         self.lookahead = ExponentialRegressionIndicator.DEFAULT_LOOKAHEAD   # Predicción a 20 días                          | Clenow
         self.horizon = ExponentialRegressionIndicator.DEFAULT_HORIZON       # Ventana de 90 días para entrenar el modelo    | Clenow
@@ -70,12 +70,12 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
 
         slope_wrapper = Wrapper().set_parameters({
             'ticker': f"model-momentum-{self.model}-{ticker_str}@slope",
-            'default': f"model-momentum-{self.model}-{self.MSCI_WORLD}@slope"
+            'default': f"model-momentum-{self.model}-{self.DEFAULT_TICKER}@slope"
         })
 
         r2_wrapper = Wrapper().set_parameters({
             'ticker': f"model-momentum-{self.model}-{ticker_str}@r2",
-            'default': f"model-momentum-{self.model}-{self.MSCI_WORLD}@r2"
+            'default': f"model-momentum-{self.model}-{self.DEFAULT_TICKER}@r2"
         })
 
         composite = fd.Product()
