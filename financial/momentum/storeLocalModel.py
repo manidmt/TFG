@@ -53,7 +53,9 @@ def storeLocal_data(ticker,
                         start_date: str = '1990-01-01',
                         end_date: str = '2024-12-31',
                         lookahead: int = 20, 
-                        horizon: int = 90):
+                        horizon: int = 90,
+                        store_slope: bool = False,
+                        store_r2: bool = False):
     '''
     Computes and stores the momentum (Beta) and R² for a given ticker using FileCache.
     '''
@@ -66,52 +68,83 @@ def storeLocal_data(ticker,
                                 cache=FileCache(cache_path=cache_path+"/", update_strategy=NoUpdateStrategy()))
 
 
-    # Fechas predefinidas... ¿cambiar a fechas generales?
-
     data = ds.get_data(ticker, start_date, end_date)
-    #data = ds.get_data(ticker)  
+
 
     # Initialize series
-    slope_series = pd.Series(data=np.nan, index=data.index, dtype=float)
-    r2_series = pd.Series(index=data.index)
+    slope_series = pd.Series(data=np.nan, index=data.index, dtype=float) if store_slope else None
+    r2_series = pd.Series(index=data.index)                                 if store_r2 else None       
     forecast = pd.Series(index=data.index)
     relative_predicted_values = pd.Series(index=data.index)
 
     for index in range(len(data) - horizon):
-        model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
-        
-        beta = model.model.coef_[0]                                         # Slope of the regression line
-        forecast.iloc[index + horizon] = model.predict([[lookahead]])
-        slope_series.at[data.index[index + horizon]] = beta
 
-        #print(f"Dia: {data.index[index+horizon]}, Valor real: {data.iloc[index + horizon]}, Predicción: {forecast.iloc[index + horizon]}")
-        relative_predicted_values[data.index[index+horizon]] = ((forecast.iloc[index + horizon] / data.iloc[index + horizon]) * 100) - 100 if data.iloc[index + horizon] != 0 else 0
+        model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
+                                        
+        forecast.iloc[index + horizon] = model.predict([[lookahead]])
+        # If we want a more clearly view, we should multiply by 100:
+        relative_predicted_values[data.index[index+horizon]] = ((forecast.iloc[index + horizon] / data.iloc[index + horizon])) - 1 if data.iloc[index + horizon] != 0 else 0
+
+        if store_slope:
+            beta = model.model.coef_[0]                             # Slope of the regression line 
+            slope_series.at[data.index[index + horizon]] = beta
+
+        '''
+        if store_r2:    # We compute the R² score for the model in the current index in a lookahead window
+            if index > lookahead:
+                y_true = data.iloc[index + horizon - lookahead: index + horizon]  
+                y_pred = forecast.shift(lookahead).iloc[index + horizon - lookahead: index + horizon]
+                print(f"Index: {index}, y_true: {y_true.tail(10)}, y_pred: {y_pred.tail(10)}")
+                if not (y_pred.isna().any() or y_true.isna().any()):
+                    r2_series.iloc[index + horizon] = r2_score(y_true, y_pred)
+                    '''
+
+        if store_r2:    
+            if index >= horizon + lookahead:
+                
+                y_true = data.iloc[index : index + horizon]  
+                y_pred = forecast.shift(lookahead).iloc[index : index + horizon]
+
+                # Eliminamos valores NaN antes de calcular R2
+                y_true_clean = y_true.dropna()
+                y_pred_clean = y_pred.dropna()
+
+                r2_value = r2_score(y_true_clean, y_pred_clean)
+                r2_series.iloc[index + horizon] = r2_value
+
+                if r2_value < 0:
+                    print(f"?? R2 NEGATIVO en {data.index[index + horizon]}")
+                    print(f"Valores reales:\n{y_true_clean}")
+                    print(f"Valores predichos:\n{y_pred_clean}")
+                    print(f"R2 calculado: {r2_value}")
+                    print("-" * 50)    
+        
+        
     
     relative_predicted_values = relative_predicted_values.dropna()
-    forecast = forecast.shift(lookahead).dropna()
-    target = data[horizon+lookahead:]
-    r2 = r2_score(target, forecast)
-    r2_series[:] = r2
-
-
-    # Forzar actualizacion de la serie antes de guardarla
-    slope_series = slope_series.dropna()  # Eliminar valores NaN
-    slope_series = slope_series.copy()  # Asegurar que no es una vista de otra
-    # Equiv =? momentum_series = momentum_series.dropna().copy() o momentum_series = pd.Series(momentum_series.dropna().to_dict())
-    
     # Save the series
     prediction_path = os.path.join(cache_path, f"model_momentum-{model_name}-{ticker}")
-    slope_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@slope")
-    r2_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@r2")
 
     with open(prediction_path, 'wb') as file:
         pickle.dump(relative_predicted_values, file)
+    
+    if store_slope:
+        # Forzar actualizacion de la serie antes de guardarla
+        slope_series = slope_series.dropna()  # Eliminar valores NaN
+        slope_series = slope_series.copy()  # Asegurar que no es una vista de otra
+        slope_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@slope")
+        with open(slope_path, 'wb') as file:
+            pickle.dump(slope_series, file)
+    
+    if store_r2:
+        r2_series = r2_series.dropna()
+        r2_series = r2_series.copy()
+        r2_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@r2")
+        with open(r2_path, 'wb') as file:
+            pickle.dump(r2_series, file)
+    
+    
 
-    with open(slope_path, 'wb') as file:
-        pickle.dump(slope_series, file)
-
-    with open(r2_path, 'wb') as file:
-        pickle.dump(r2_series, file)
 
 
 
@@ -173,7 +206,7 @@ def store_exponentialModel_data(ticker,
 
     hyperparameters = {
         "input": {
-            "features": "local_regression_features_wrapper"
+            "features": "local_features_wrapper"
             # "normalization": { "method": "z-score", "start_index": start_date, "end_index": end_date }
             },
         "output": {
@@ -184,7 +217,7 @@ def store_exponentialModel_data(ticker,
             },    
     }
 
-    store_momentum_data(ticker, expReg.ExponentialRegressionModelFactory(), hyperparameters, "exponential", lookahead=lookahead, ds=ds, cache_path=cache_path)
+    storeLocal_data(ticker, expReg.ExponentialRegressionModelFactory(), hyperparameters, "exponential", ds, cache_path, lookahead=lookahead, store_slope=True, store_r2=True)
 
 
 
