@@ -8,22 +8,16 @@ import financial.momentum.storeLocalModel as  sLM
 
 
 class ModelExperiment:
-    
-    def __new__(cls, mode, datastore, model_factory, name, start_year, end_year,  **kwargs):
-
-        if mode == 'local':
-            return LocalModelExperiment() 
-        elif mode == 'global':
-            return GlobalModelExperiment()
-        else:
-            raise ValueError(f"Unknown mode: {mode}")
-        
     def __init__(self, datastore, model_factory, name, start_year, end_year, **kwargs):
         self.datastore = datastore
         self.model_factory = model_factory
         self.name = name
         self.start_year = start_year
-        self.end_year = end_year   
+        self.end_year = end_year
+
+    def run(self, ticker):
+        raise NotImplementedError("Subclasses must implement 'run'")
+
 
 
 
@@ -66,3 +60,37 @@ class GlobalModelExperiment(ModelExperiment):
 
         super().__init__(datastore, model_factory)
         
+
+
+
+
+
+
+
+
+
+
+class ModelExperimentFactory:
+    
+    @staticmethod
+    def create_experiment(config):
+        """
+        Recibe un diccionario de configuración y devuelve una instancia del modelo correspondiente.
+        """
+        mode = config.get("mode")
+        datastore = config.get("datastore")
+        model_factory = config.get("model_factory")
+        name = config.get("name")
+        start_year = config.get("start_year")
+        end_year = config.get("end_year")
+
+        if mode == "local":
+            lookahead = config.get("lookahead", 20)
+            horizon = config.get("horizon", 90)
+            return LocalModelExperiment(datastore, model_factory, name, start_year, end_year, lookahead, horizon)
+
+        elif mode == "global":
+            return GlobalModelExperiment(datastore, model_factory, name, start_year, end_year)
+
+        else:
+            raise ValueError(f"Unknown mode: {mode}")

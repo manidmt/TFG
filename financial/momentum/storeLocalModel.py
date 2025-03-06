@@ -97,13 +97,60 @@ def storeLocal_data(ticker,
                 print(f"Index: {index}, y_true: {y_true.tail(10)}, y_pred: {y_pred.tail(10)}")
                 if not (y_pred.isna().any() or y_true.isna().any()):
                     r2_series.iloc[index + horizon] = r2_score(y_true, y_pred)
-                    '''
+                    
+
+        
+
+        if store_r2:
+            if index >= horizon:
+                # Seleccionamos los últimos `horizon` valores usados para entrenar el modelo
+                train_data = data.iloc[index: index + horizon]
+
+                # Creamos el modelo de nuevo sobre estos datos
+                # model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
+
+                print(f"Index: {index}, Train data: {train_data.tail(10)}")
+
+                # Calculamos las predicciones dentro de la ventana de entrenamiento
+                X_train = np.arange(-horizon + 1, 1).reshape(-1, 1)  # Rangos de días usados en la regresión
+                y_true = train_data
+                y_pred = model.predict(X_train)
+
+                # Eliminamos valores NaN antes de calcular R²
+                y_true_clean = y_true.dropna()
+                y_pred_clean = pd.Series(y_pred, index=y_true.index).dropna()
+
+                if len(y_true_clean) > 1 and len(y_pred_clean) > 1:
+                    r2_series.iloc[index + horizon] = r2_score(y_true_clean, y_pred_clean)
+
+                    
+        if store_r2:
+            if index >= horizon:
+                # Seleccionamos los últimos `horizon` valores usados para entrenar el modelo
+                train_data = data.iloc[index: index + horizon]
+
+                # Creamos el modelo de nuevo sobre estos datos
+                # model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
+
+                print(f"Index: {index}, Train data: {train_data.tail(10)}")
+
+                # Calculamos las predicciones dentro de la ventana de entrenamiento
+                X_train = pd.DataFrame(np.arange(-horizon + 1, 1).reshape(-1, 1))   # Rangos de días usados en la regresión
+                y_true = train_data
+                y_pred = model.predict(X_train)
+
+                # Eliminamos valores NaN antes de calcular R²
+                y_true_clean = y_true.dropna()
+                y_pred_clean = pd.Series(y_pred, index=y_true.index).dropna()
+
+                if len(y_true_clean) > 1 and len(y_pred_clean) > 1:
+                    r2_series.iloc[index + horizon] = r2_score(y_true_clean, y_pred_clean)
 
         if store_r2:    
-            if index >= horizon + lookahead:
+            if index >= horizon:
                 
                 y_true = data.iloc[index : index + horizon]  
-                y_pred = forecast.shift(lookahead).iloc[index : index + horizon]
+                y_pred = forecast.iloc[index : index + horizon]
 
                 # Eliminamos valores NaN antes de calcular R2
                 y_true_clean = y_true.dropna()
@@ -117,7 +164,38 @@ def storeLocal_data(ticker,
                     print(f"Valores reales:\n{y_true_clean}")
                     print(f"Valores predichos:\n{y_pred_clean}")
                     print(f"R2 calculado: {r2_value}")
-                    print("-" * 50)    
+                    print("-" * 50)
+
+        if store_r2:    
+            if index >= horizon:
+                
+                y_true = data.iloc[index - horizon : index]  
+                y_pred = forecast.iloc[index : index + horizon]
+
+                # Eliminamos valores NaN antes de calcular R2
+                # y_true_clean = y_true.dropna()
+                # y_pred_clean = y_pred.dropna()
+
+                r2_value = r2_score(y_true, y_pred)
+                r2_series.iloc[index + horizon] = r2_value
+        '''
+        
+
+        if store_r2:
+            if index >= horizon:
+                X_train = pd.DataFrame(np.arange(-horizon + 1, 1).reshape(-1, 1))  # Generamos la matriz de días usados en la regresión
+                y_true = data.iloc[index: index + horizon]  # Valores reales usados en la regresión
+                y_pred = model.predict(X_train)  # Predicciones del modelo en los datos de entrenamiento
+
+                
+                y_true_clean = y_true.dropna()
+                y_pred_clean = pd.Series(y_pred, index=y_true.index).dropna() 
+
+                if len(y_true_clean) > 1 and len(y_pred_clean) > 1:
+                    r2_series.at[data.index[index + horizon]] = r2_score(y_true_clean, y_pred_clean)
+
+
+
         
         
     
