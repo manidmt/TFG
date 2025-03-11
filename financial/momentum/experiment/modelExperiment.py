@@ -5,16 +5,22 @@ Testing Factorys/Models
 '''
 
 import financial.momentum.storeLocalModel as  sLM
+import financial.lab.evaluation as labevaluation
 
 
 class ModelExperiment:
-    def __init__(self, datastore, model_factory, name, start_year, end_year, **kwargs):
+
+    ticker = None
+    
+    def __init__(self, datastore, model_factory, name, start_year, end_year, lookahead, **kwargs):
         self.datastore = datastore
         self.model_factory = model_factory
         self.name = name
         self.start_year = start_year
         self.end_year = end_year
+        self.lookahead = lookahead
 
+    
     def run(self, ticker):
         raise NotImplementedError("Subclasses must implement 'run'")
 
@@ -28,16 +34,11 @@ class LocalModelExperiment(ModelExperiment):
 
     def __init__(self, datastore, model_factory, name, start_year, end_year, lookahead=20, horizon=90):
 
-        super().__init__(datastore, model_factory, name, start_year, end_year)
-        self.lookahead = lookahead
+        super().__init__(datastore, model_factory, name, start_year, end_year, lookahead)
         self.horizon = horizon
 
 
     def run(self, ticker):
-
-        def local_feature_wrapper(data):
-
-            return sLM.local_features(data, ticker)
         
         hyperparameters = {
             "input":{
@@ -56,11 +57,40 @@ class LocalModelExperiment(ModelExperiment):
 
 class GlobalModelExperiment(ModelExperiment):
 
-    def __init__(self, datastore, model_factory):
+    def __init__(self, datastore, model_factory, name, start_year, end_year, lookahead=20):
 
-        super().__init__(datastore, model_factory)
+        super().__init__(datastore, model_factory, name, start_year, end_year, lookahead)
         
+    def run(self, ticker):
+        
+        hyperparameters = {
+        "input": {
+            "features": "baseline_features_wrapper",
+            },
+        "output": {
+            "target": [ticker],
+            "lookahead": self.lookahead,
+            "prediction": "relative", # "absolute"|"relative"
+            },    
+        }
 
+        cross_validation = labevaluation.WalkForwardCrossValidation ( self.name, 
+                                                                    hyperparameters, 
+                                                                    features, 
+                                                                    target, 
+                                                                    df, 
+                                                                    splits, 
+                                                                    self.model_factory,
+                                                                    save_path=os.environ["CACHE"],
+                                                                    save_intermediate_results=False)
+        cross_validation.run()
+            
+        # Final model
+
+        print('Final model...')
+            
+        final_model = labevaluation.ModelTraining(self.model, hyperparameters, features, target, df, self.model_factory)
+        final_model.run()
 
 
 
