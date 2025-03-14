@@ -4,15 +4,17 @@ Testing Factorys/Models
 @author: Manuel Díaz-Meco (manidmt5@gmail.com)
 '''
 
+import os
 import financial.momentum.storeLocalModel as  sLM
 import financial.lab.evaluation as labevaluation
+import financial.data as labdata
 
 
 class ModelExperiment:
 
     ticker = None
     
-    def __init__(self, datastore, model_factory, name, start_year, end_year, lookahead, **kwargs):
+    def __init__(self, datastore, model_factory, name, start_year, end_year, lookahead=None, **kwargs):
         self.datastore = datastore
         self.model_factory = model_factory
         self.name = name
@@ -51,8 +53,8 @@ class LocalModelExperiment(ModelExperiment):
             }
         }
 
-        sLM.storeLocal_data(ticker, self.model_factory, hyperparameters, self.name, self.datastore, self.lookahead, self.horizon)
-        
+        forecast = sLM.storeLocal_data(ticker, self.model_factory, hyperparameters, self.name, self.datastore, self.lookahead, self.horizon)
+        return forecast
 
 
 class GlobalModelExperiment(ModelExperiment):
@@ -60,6 +62,10 @@ class GlobalModelExperiment(ModelExperiment):
     def __init__(self, datastore, model_factory, name, start_year, end_year, lookahead=20):
 
         super().__init__(datastore, model_factory, name, start_year, end_year, lookahead)
+        # Example: start_year = 1990, end_year = 2024, start_year_split = 1990 + (2024-1990)*5/7 = 2014
+        start_year_split = round(int(end_year[:4]) - int(start_year[:4]) * 5/7) + int(start_year[:4])
+        # Splits: 2014, 2015, 2016... 2023
+        self.splits = ["f{year}-01-01" for year in range(start_year_split, int(end_year[:4]))]
         
     def run(self, ticker):
         
@@ -73,13 +79,20 @@ class GlobalModelExperiment(ModelExperiment):
             "prediction": "relative", # "absolute"|"relative"
             },    
         }
+        features = self.model_factory.input_descriptor(hyperparameters, self.datastore)
+        target = self.model_factory.output_descriptor(hyperparameters, self.datastore)
+        
+        data_builder = labdata.DataStoreDataPreprocessing(self.name, ticker, self.datastore, features, target, self.start_year, self.end_year)
+        data_builder.run()
+        df = data_builder.dataset
+
 
         cross_validation = labevaluation.WalkForwardCrossValidation ( self.name, 
                                                                     hyperparameters, 
                                                                     features, 
                                                                     target, 
                                                                     df, 
-                                                                    splits, 
+                                                                    self.splits, 
                                                                     self.model_factory,
                                                                     save_path=os.environ["CACHE"],
                                                                     save_intermediate_results=False)
@@ -91,6 +104,8 @@ class GlobalModelExperiment(ModelExperiment):
             
         final_model = labevaluation.ModelTraining(self.model, hyperparameters, features, target, df, self.model_factory)
         final_model.run()
+
+        return final_model.model.get_data(self.datastore, self.start_year, self.end_year)
 
 
 

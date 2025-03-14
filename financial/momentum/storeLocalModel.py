@@ -194,7 +194,7 @@ def storeLocal_data(ticker,
                 if len(y_true_clean) > 1 and len(y_pred_clean) > 1:
                     r2_series.at[data.index[index + horizon]] = r2_score(y_true_clean, y_pred_clean)
 
-
+    
 
         
         
@@ -221,7 +221,7 @@ def storeLocal_data(ticker,
         with open(r2_path, 'wb') as file:
             pickle.dump(r2_series, file)
     
-    
+    return relative_predicted_values
 
 
 
