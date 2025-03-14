@@ -63,9 +63,9 @@ class GlobalModelExperiment(ModelExperiment):
 
         super().__init__(datastore, model_factory, name, start_year, end_year, lookahead)
         # Example: start_year = 1990, end_year = 2024, start_year_split = 1990 + (2024-1990)*5/7 = 2014
-        start_year_split = round(int(end_year[:4]) - int(start_year[:4]) * 5/7) + int(start_year[:4])
+        start_year_split = round((int(end_year[:4]) - int(start_year[:4])) * 5/7) + int(start_year[:4])
         # Splits: 2014, 2015, 2016... 2023
-        self.splits = ["f{year}-01-01" for year in range(start_year_split, int(end_year[:4]))]
+        self.splits = [f"{year}-01-01" for year in range(start_year_split, int(end_year[:4]))]
         
     def run(self, ticker):
         
@@ -102,7 +102,7 @@ class GlobalModelExperiment(ModelExperiment):
 
         print('Final model...')
             
-        final_model = labevaluation.ModelTraining(self.model, hyperparameters, features, target, df, self.model_factory)
+        final_model = labevaluation.ModelTraining(self.name, hyperparameters, features, target, df, self.model_factory)
         final_model.run()
 
         return final_model.model.get_data(self.datastore, self.start_year, self.end_year)
