@@ -14,7 +14,7 @@ from sklearn.metrics import r2_score
 
 class ModelExperiment:
     
-    def __init__(self, datastore, model_factory, name, start_year, end_year, lookahead=None, horizon=None, **kwargs):
+    def __init__(self, datastore, model_factory, name:str, start_year:str, end_year:str, lookahead:int=None, horizon:int=None, **kwargs):
         self.datastore = datastore
         self.model_factory = model_factory
         self.name = name
@@ -66,7 +66,7 @@ class LocalModelExperiment(ModelExperiment):
             }
         }
 
-        self.predictions = sLM.storeLocal_data(self.ticker, self.model_factory, self.hyperparameters, self.name, self.datastore, self.start_year, self.end_year,  self.lookahead, self.horizon)
+        self.predictions = sLM.storeLocal_data(self.ticker, self.model_factory, self.hyperparameters, self.name, self.datastore, None, self.start_year, self.end_year,  self.lookahead, self.horizon)
     
 
 GLOBAL_HORIZON = 20

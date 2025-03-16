@@ -33,6 +33,11 @@ class TestLocalModelExperiment(unittest.TestCase):
     def test_run(self):
 
         local_model_experiment = LocalModelExperiment(self.datastore, self.factory, self.name, self.start_year, self.end_year, self.lookahead, self.horizon)
+        
+        print(f"🔍 start_year: {self.start_year}, type: {type(self.start_year)}")
+        print(f"🔍 end_year: {self.end_year}, type: {type(self.end_year)}")
+
+        
         local_model_experiment.run(self.ticker)
         prediction_experiment = local_model_experiment.predictions * 100
 
@@ -90,7 +95,7 @@ class TestLocalModelExperiment(unittest.TestCase):
                 return features
 
     def local_regression_features_wrapper(self, ds: fd.DataStore) -> fd.Set:
-                return self.local_regression_features(ds,self.ticker)  
+                return self.local_regression_features(ds,self.ticker)  # ¿COMO FUNCIONAN LOS WRAPPERS?
      
     
 if __name__ == '__main__':
