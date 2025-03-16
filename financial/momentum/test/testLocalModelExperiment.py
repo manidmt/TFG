@@ -15,26 +15,30 @@ import financial.data as fd
 
 from financial.io.file.cache import FileCache
 from financial.momentum.exponentialRegression import ExponentialRegressionModelFactory
-from momentum.experiment.modelExperiment import LocalModelExperiment
-from momentum.storeLocalModel import storeLocal_data
+from financial.momentum.experiment.modelExperiment import LocalModelExperiment
+from financial.momentum.storeLocalModel import storeLocal_data
 
 class TestLocalModelExperiment(unittest.TestCase):
 
     def setUp(self):
         self.datastore = fd.CachedDataStore(path=os.environ["DATA"], cache=FileCache(cache_path=os.environ["CACHE"]+"/"))
         self.factory = ExponentialRegressionModelFactory()
-        self.name = None
-        self.start_year = None
-        self.end_year = None
+        self.name = 'Test'
+        self.start_year = '1990-01-01'
+        self.end_year = '2023-12-31'
         self.lookahead = 20
         self.horizon = 90
         self.ticker = 'AAPL'
 
     def test_run(self):
+
         local_model_experiment = LocalModelExperiment(self.datastore, self.factory, self.name, self.start_year, self.end_year, self.lookahead, self.horizon)
-        prediction_experiment = local_model_experiment.run(self.ticker) * 100
+        local_model_experiment.run(self.ticker)
+        prediction_experiment = local_model_experiment.predictions * 100
+
         prediction_manual = self.manual_model_creation(self.ticker, self.datastore, self.factory, self.start_year, self.end_year, self.lookahead, self.horizon) * 100
-        np.testing.assert_almost_equal(prediction_experiment, prediction_manual, decimal=2)
+
+        np.testing.assert_almost_equal(prediction_experiment, prediction_manual, decimal=2) # Está bien el manual?
     
     def manual_model_creation(self, ticker, datastore, factory, start_date, end_date, lookahead, horizon):
 
@@ -54,14 +58,8 @@ class TestLocalModelExperiment(unittest.TestCase):
                     },    
         }
 
-        def local_regression_features(ds: fd.DataStore, ticker: str) -> fd.Set:
-            features = fd.Set('Local exponential regression model features')    
-            variable = fd.Variable(ticker)
-            features.append(variable)
-            return features
         
-        def local_regression_features_wrapper(ds: fd.DataStore) -> fd.Set:
-            return local_regression_features(ds,ticker)
+        
         
         def create_local_model(start_index: int=0, samples: int=horizon) -> fm.Model:
             model = factory.create_model(experiment_id, hyperparameters, datastore)
@@ -83,6 +81,17 @@ class TestLocalModelExperiment(unittest.TestCase):
 
         forecast = local_regression(data, samples=self.horizon)
         return forecast
+
+
+    def local_regression_features(ds: fd.DataStore, ticker: str) -> fd.Set:
+                features = fd.Set('Local exponential regression model features')    
+                variable = fd.Variable(ticker)
+                features.append(variable)
+                return features
+
+    def local_regression_features_wrapper(self, ds: fd.DataStore) -> fd.Set:
+                return self.local_regression_features(ds,self.ticker)  
+     
     
 if __name__ == '__main__':
     unittest.main()

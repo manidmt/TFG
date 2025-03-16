@@ -68,6 +68,10 @@ def storeLocal_data(ticker,
                                 cache=FileCache(cache_path=cache_path+"/", update_strategy=NoUpdateStrategy()))
 
 
+    start_date = pd.Timestamp(start_date) if isinstance(start_date, str) else start_date
+    end_date = pd.Timestamp(end_date) if isinstance(end_date, str) else end_date
+
+
     data = ds.get_data(ticker, start_date, end_date)
 
 
