@@ -8,7 +8,7 @@ import os
 import financial.data as fd
 import financial.momentum.storeLocalModel as  sLM
 import financial.lab.evaluation as labevaluation
-import financial.data as labdata
+import financial.lab.data as labdata
 from sklearn.metrics import r2_score
 
 
@@ -67,7 +67,8 @@ class LocalModelExperiment(ModelExperiment):
         }
 
         self.predictions = sLM.storeLocal_data(self.ticker, self.model_factory, self.hyperparameters, self.name, self.datastore, None, self.start_year, self.end_year,  self.lookahead, self.horizon)
-    
+        # SE ESTÁ HACIENDO EL OUTPUT MANUALMENTE RELATIVE, COMPROBAR
+        # MÉTRICAS CALCULAR CON EXPERIMENT --> SE NECESITA TARGET Y PREDICTION (TARGET = DATOS VERDADEROS)
 
 GLOBAL_HORIZON = 20
 ticker_global = None
@@ -84,10 +85,10 @@ class GlobalModelExperiment(ModelExperiment):
         self.hyperparameters = None
         self.features = None
         self.target = None
-        
+        # Hiperparametros como parametro del constructor
 
         
-    def run(self, ticker):
+    def run(self, ticker): # Run sin paramtros, todo al constructor
 
         self.ticker = ticker
         ticker_global = ticker
@@ -95,7 +96,9 @@ class GlobalModelExperiment(ModelExperiment):
         
         self.hyperparameters = {
             "input": {
-                "features": "baseline_features_wrapper",
+                "features": "financial.momentum.experiment.modelExperiment.baseline_features",
+                "horizon": self.horizon,
+                "ticker": self.ticker
                 },
             "output": {
                 "target": [ticker],
@@ -130,7 +133,7 @@ class GlobalModelExperiment(ModelExperiment):
         self.metrics["MSE"] = final_model.results[self.ticker].MSE()
         self.metrics["RMSE"] = final_model.results[self.ticker].RMSE()
         self.metrics["MAE"] = final_model.results[self.ticker].MAE()
-        self.metrics["MAPE"] = final_model.results[self.ticker].MAPE()
+        self.metrics["MAPE"] = final_model.results[self.ticker].MAPE() # NO HACE FALTA --> MÁS ADELANTE, DEVOLVER TARGET Y PREDICTION
         self.metrics["R2"] = self.R2()
 
         self.predictions =  final_model.model.get_data(self.datastore, self.start_year, self.end_year)
@@ -158,12 +161,15 @@ class GlobalModelExperiment(ModelExperiment):
 
 
 
-def baseline_features(ds: fd.DataStore, ticker: str) -> fd.Set:
+def baseline_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
         features = fd.Set('Baseline features')
         
+        ticker = hyperparameters["input"]["ticker"]
+        horizon = hyperparameters["input"]["horizon"]
+
         variable = fd.Variable(ticker)
         #features.append(variable)
-        for i in range(1, GLOBAL_HORIZON+1): 
+        for i in range(1, horizon+1): 
             features.append( fd.Change(variable, i) )
 
         return features

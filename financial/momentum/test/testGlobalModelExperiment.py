@@ -11,7 +11,7 @@ import pandas as pd
 import financial.data as fd
 
 from financial.io.file.cache import FileCache
-from financial.momentum.experiment.modelExperiment import GlobalModelExperiment
+from financial.momentum.experiment.modelExperiment import *
 from financial.momentum.exponentialRegression import ExponentialRegressionModelFactory
 
 class TestGlobalModelExperiment(unittest.TestCase):
