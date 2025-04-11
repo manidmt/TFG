@@ -6,6 +6,7 @@ Testing GlobalModelExperiment class
 
 import unittest
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # INFO and WARNING messages are not printed (TensorFlow)
 
 import pandas as pd
 import financial.data as fd

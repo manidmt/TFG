@@ -7,6 +7,7 @@ Testing LocalModelExperiment class
 
 import unittest
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # INFO and WARNING messages are not printed (TensorFlow)
 
 import pandas as pd
 import numpy as np
@@ -33,17 +34,14 @@ class TestLocalModelExperiment(unittest.TestCase):
     def test_run(self):
 
         local_model_experiment = LocalModelExperiment(self.datastore, self.factory, self.name, self.start_year, self.end_year, self.lookahead, self.horizon)
-        
-        print(f"🔍 start_year: {self.start_year}, type: {type(self.start_year)}")
-        print(f"🔍 end_year: {self.end_year}, type: {type(self.end_year)}")
 
         
         local_model_experiment.run(self.ticker)
         prediction_experiment = local_model_experiment.predictions * 100
 
-        prediction_manual = self.manual_model_creation(self.ticker, self.datastore, self.factory, self.start_year, self.end_year, self.lookahead, self.horizon) * 100
+        prediction_manual = self.manual_model_creation(self.ticker, self.datastore, self.factory, self.start_year, self.end_year, self.lookahead, self.horizon) * 100 - 100
 
-        np.testing.assert_almost_equal(prediction_experiment, prediction_manual, decimal=2) # Está bien el manual?
+        np.testing.assert_almost_equal(prediction_experiment.to_numpy(), prediction_manual.to_numpy(), decimal=2) # Está bien el manual?
     
     def manual_model_creation(self, ticker, datastore, factory, start_date, end_date, lookahead, horizon):
 
@@ -52,7 +50,7 @@ class TestLocalModelExperiment(unittest.TestCase):
 
         hyperparameters = {
                 "input": {
-                    "features": "local_regression_features_wrapper"
+                    "features": "financial.momentum.storeLocalModel.local_features"
                     # "normalization": { "method": "z-score", "start_index": start_date, "end_index": end_date }
                     },
                 "output": {
@@ -85,6 +83,7 @@ class TestLocalModelExperiment(unittest.TestCase):
             return forecast
 
         forecast = local_regression(data, samples=self.horizon)
+        forecast = forecast.dropna()
         return forecast
 
 

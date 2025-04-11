@@ -57,7 +57,7 @@ class LocalModelExperiment(ModelExperiment):
         
         self.hyperparameters = {
             "input":{
-                "features": "local_features_wrapper"
+                "features": "financial.momentum.storeLocalModel.local_features"
             },
             "output":{
                 "target": [self.ticker],
@@ -113,6 +113,7 @@ class GlobalModelExperiment(ModelExperiment):
         data_builder.run()
         df = data_builder.dataset
 
+        
 
         cross_validation = labevaluation.WalkForwardCrossValidation ( self.name, 
                                                                     self.hyperparameters, 
@@ -134,7 +135,7 @@ class GlobalModelExperiment(ModelExperiment):
         self.metrics["RMSE"] = final_model.results[self.ticker].RMSE()
         self.metrics["MAE"] = final_model.results[self.ticker].MAE()
         self.metrics["MAPE"] = final_model.results[self.ticker].MAPE() # NO HACE FALTA --> MÁS ADELANTE, DEVOLVER TARGET Y PREDICTION
-        self.metrics["R2"] = self.R2()
+        # self.metrics["R2"] = self.R2()
 
         self.predictions =  final_model.model.get_data(self.datastore, self.start_year, self.end_year)
 

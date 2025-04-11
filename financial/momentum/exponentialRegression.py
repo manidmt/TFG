@@ -69,6 +69,15 @@ class ExponentialRegressionModelFactory(ModelFactory):
         return ExponentialScikitLearnModel(model_id, input_descriptor, output_descriptor, model, hyperparameters)
 
 
+    def output_descriptor(self, hyperparameters: dict, ds: fd.DataStore = None) -> fd.DataDescriptor:
+        outputs = fd.Set('outputs')
+        for output in hyperparameters["output"]["target"]:
+            variable = fd.Variable(output) 
+            lookahead = hyperparameters["output"]["lookahead"]
+            target = fd.LookAhead(variable, lookahead)
+            outputs.append( target )            
+        return outputs
+
 
 
 '''
