@@ -92,98 +92,6 @@ def storeLocal_data(ticker,
             beta = model.model.coef_[0]                             # Slope of the regression line 
             slope_series.at[data.index[index + horizon]] = beta
 
-        '''
-        if store_r2:    # We compute the R² score for the model in the current index in a lookahead window
-            if index > lookahead:
-                y_true = data.iloc[index + horizon - lookahead: index + horizon]  
-                y_pred = forecast.shift(lookahead).iloc[index + horizon - lookahead: index + horizon]
-                print(f"Index: {index}, y_true: {y_true.tail(10)}, y_pred: {y_pred.tail(10)}")
-                if not (y_pred.isna().any() or y_true.isna().any()):
-                    r2_series.iloc[index + horizon] = r2_score(y_true, y_pred)
-                    
-
-        
-
-        if store_r2:
-            if index >= horizon:
-                # Seleccionamos los últimos `horizon` valores usados para entrenar el modelo
-                train_data = data.iloc[index: index + horizon]
-
-                # Creamos el modelo de nuevo sobre estos datos
-                # model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
-
-                print(f"Index: {index}, Train data: {train_data.tail(10)}")
-
-                # Calculamos las predicciones dentro de la ventana de entrenamiento
-                X_train = np.arange(-horizon + 1, 1).reshape(-1, 1)  # Rangos de días usados en la regresión
-                y_true = train_data
-                y_pred = model.predict(X_train)
-
-                # Eliminamos valores NaN antes de calcular R²
-                y_true_clean = y_true.dropna()
-                y_pred_clean = pd.Series(y_pred, index=y_true.index).dropna()
-
-                if len(y_true_clean) > 1 and len(y_pred_clean) > 1:
-                    r2_series.iloc[index + horizon] = r2_score(y_true_clean, y_pred_clean)
-
-                    
-        if store_r2:
-            if index >= horizon:
-                # Seleccionamos los últimos `horizon` valores usados para entrenar el modelo
-                train_data = data.iloc[index: index + horizon]
-
-                # Creamos el modelo de nuevo sobre estos datos
-                # model = create_local_model(factory, model_name, hyperparameters, ds, data, ticker, index, horizon)
-
-                print(f"Index: {index}, Train data: {train_data.tail(10)}")
-
-                # Calculamos las predicciones dentro de la ventana de entrenamiento
-                X_train = pd.DataFrame(np.arange(-horizon + 1, 1).reshape(-1, 1))   # Rangos de días usados en la regresión
-                y_true = train_data
-                y_pred = model.predict(X_train)
-
-                # Eliminamos valores NaN antes de calcular R²
-                y_true_clean = y_true.dropna()
-                y_pred_clean = pd.Series(y_pred, index=y_true.index).dropna()
-
-                if len(y_true_clean) > 1 and len(y_pred_clean) > 1:
-                    r2_series.iloc[index + horizon] = r2_score(y_true_clean, y_pred_clean)
-
-        if store_r2:    
-            if index >= horizon:
-                
-                y_true = data.iloc[index : index + horizon]  
-                y_pred = forecast.iloc[index : index + horizon]
-
-                # Eliminamos valores NaN antes de calcular R2
-                y_true_clean = y_true.dropna()
-                y_pred_clean = y_pred.dropna()
-
-                r2_value = r2_score(y_true_clean, y_pred_clean)
-                r2_series.iloc[index + horizon] = r2_value
-
-                if r2_value < 0:
-                    print(f"?? R2 NEGATIVO en {data.index[index + horizon]}")
-                    print(f"Valores reales:\n{y_true_clean}")
-                    print(f"Valores predichos:\n{y_pred_clean}")
-                    print(f"R2 calculado: {r2_value}")
-                    print("-" * 50)
-
-        if store_r2:    
-            if index >= horizon:
-                
-                y_true = data.iloc[index - horizon : index]  
-                y_pred = forecast.iloc[index : index + horizon]
-
-                # Eliminamos valores NaN antes de calcular R2
-                # y_true_clean = y_true.dropna()
-                # y_pred_clean = y_pred.dropna()
-
-                r2_value = r2_score(y_true, y_pred)
-                r2_series.iloc[index + horizon] = r2_value
-        '''
-        
-
         if store_r2:
             if index >= horizon:
                 X_train = pd.DataFrame(np.arange(-horizon + 1, 1).reshape(-1, 1))  # Generamos la matriz de días usados en la regresión
@@ -198,14 +106,12 @@ def storeLocal_data(ticker,
                     r2_series.at[data.index[index + horizon]] = r2_score(y_true_clean, y_pred_clean)
 
     
-
-        
-        
-    
     relative_predicted_values = relative_predicted_values.dropna()
     # Save the series
     prediction_path = os.path.join(cache_path, f"model_momentum-{model_name}-{ticker}")
 
+    store_results(prediction_path, ticker, model_name, relative_predicted_values, slope_series, r2_series)
+    '''
     with open(prediction_path, 'wb') as file:
         pickle.dump(relative_predicted_values, file)
     
@@ -224,38 +130,29 @@ def storeLocal_data(ticker,
         with open(r2_path, 'wb') as file:
             pickle.dump(r2_series, file)
     
+    '''
     return relative_predicted_values
 
 
+def store_results(prediction_path: str, ticker: str, model_name: str, predictions: pd.Series, slope_series: pd.Series = None, r2_series: pd.Series = None):
+    with open(prediction_path, 'wb') as file:
+        pickle.dump(predictions, file)
+    
+    if slope_series is not None:
+        slope_series = slope_series.dropna()
+        slope_series = slope_series.copy()
+        slope_path = os.path.join(prediction_path, f"model-momentum-{model_name}-{ticker}@slope")
+        with open(slope_path, 'wb') as file:
+            pickle.dump(slope_series, file)
 
+    if r2_series is not None:
+        r2_series = r2_series.dropna()
+        r2_series = r2_series.copy()
+        r2_path = os.path.join(prediction_path, f"model-momentum-{model_name}-{ticker}@r2")
+        with open(r2_path, 'wb') as file:
+            pickle.dump(r2_series, file)
 
     # model/momentum/{model_name}/{ticker} no funcionaba --> cambio a -  ¿solución modificando el DataStore?
-    '''
-    prediction_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}.pkl")
-    slope_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@slope.pkl")
-    r2_path = os.path.join(cache_path, f"model/momentum/{model_name}/{ticker}@r2.pkl")
-
-    #print("Tail 2 of momentum series before saving:\n", momentum_series.tail())
-
-    momentum_dir = os.path.dirname(prediction_path)
-    if not os.path.exists(momentum_dir):
-        os.makedirs(momentum_dir)
-    with open(prediction_path, 'wb') as file:
-        pickle.dump(relative_predicted_values, file)
-
-    momentum_dir = os.path.dirname(slope_path)
-    if not os.path.exists(momentum_dir):
-        os.makedirs(momentum_dir)
-    with open(slope_path, 'wb') as file:
-        pickle.dump(slope_series, file)
-
-    r2_dir = os.path.dirname(r2_path)
-    if not os.path.exists(r2_dir):
-        os.makedirs(r2_dir)
-    with open(r2_path, 'wb') as file:
-        pickle.dump(r2_series, file)
-    '''
-
 
 
 def local_features(ds: fd.DataStore, ticker: str) -> fd.Set:

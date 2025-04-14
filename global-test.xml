@@ -1,0 +1,466 @@
+<?xml version="1.0" ?>
+<model id="global-test">
+  <input>
+    <set id="features">
+      <zscore mean="0.00036745790397247084" stdev="0.011442571664865883">
+        <change period="1">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.000725088614313856" stdev="0.01549944304360003">
+        <change period="2">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.0010829377684720715" stdev="0.018641596711671433">
+        <change period="3">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.0014416392408581591" stdev="0.02129402147801773">
+        <change period="4">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.0017967316108394471" stdev="0.023532975500443296">
+        <change period="5">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.002150847680607751" stdev="0.02547666441615397">
+        <change period="6">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.0025006791270810735" stdev="0.027134715188885106">
+        <change period="7">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.0028537407239665412" stdev="0.028739927353343568">
+        <change period="8">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.0032057536536093034" stdev="0.030151777827790747">
+        <change period="9">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.003563417156206734" stdev="0.03166212329684555">
+        <change period="10">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.003920749203609557" stdev="0.03312662551959323">
+        <change period="11">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.00427750465344211" stdev="0.03448596141762163">
+        <change period="12">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.004637094403238531" stdev="0.035902885692631295">
+        <change period="13">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.004995492749790454" stdev="0.037261991824623364">
+        <change period="14">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.005356481637601442" stdev="0.038559695281319896">
+        <change period="15">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.005711004040249176" stdev="0.0396966136122357">
+        <change period="16">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.006070794500273904" stdev="0.04092529321087121">
+        <change period="17">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.006431001242288658" stdev="0.042065675872112455">
+        <change period="18">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.0067885976770669905" stdev="0.04311059179348956">
+        <change period="19">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.007147991024608327" stdev="0.044137234038843606">
+        <change period="20">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.007508436501740198" stdev="0.04515772782384346">
+        <change period="21">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.007864992012606212" stdev="0.0461437816344723">
+        <change period="22">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.008220192567292445" stdev="0.04707322374437325">
+        <change period="23">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.008575284812956979" stdev="0.04799926620797937">
+        <change period="24">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.008929360358934492" stdev="0.04888048909987249">
+        <change period="25">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.009282647100087433" stdev="0.04970498492777182">
+        <change period="26">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.009631926490880908" stdev="0.05046775165051288">
+        <change period="27">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.009986300756029907" stdev="0.051311177941731">
+        <change period="28">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.010339079841918977" stdev="0.05212070343487208">
+        <change period="29">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.010694864661862563" stdev="0.052956155745473486">
+        <change period="30">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.01105046484916232" stdev="0.05377039907188744">
+        <change period="31">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.011404798288612747" stdev="0.054575917814381245">
+        <change period="32">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.011755997304988627" stdev="0.055349560967030004">
+        <change period="33">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.012108208252055375" stdev="0.05611469637231674">
+        <change period="34">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.012454282209671515" stdev="0.0567668180229984">
+        <change period="35">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.012802820028106048" stdev="0.0574315900146083">
+        <change period="36">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.013154981877390788" stdev="0.05814474446671427">
+        <change period="37">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.013505472273935275" stdev="0.05881676879375175">
+        <change period="38">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.013854198490732491" stdev="0.05947478473346844">
+        <change period="39">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.014204437016472492" stdev="0.06018501091573337">
+        <change period="40">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.014551553290380015" stdev="0.060886972860707114">
+        <change period="41">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.01489698416167236" stdev="0.06157131570636584">
+        <change period="42">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.015240150401201915" stdev="0.0622389918925569">
+        <change period="43">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.015579941005222139" stdev="0.06287460542284692">
+        <change period="44">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.015918777112933227" stdev="0.06349349784198668">
+        <change period="45">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.016261288427300846" stdev="0.06412402120804234">
+        <change period="46">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.01660228692594942" stdev="0.06470415985739844">
+        <change period="47">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.01694626688600546" stdev="0.06532148825283876">
+        <change period="48">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.01729003098404087" stdev="0.06592730014270685">
+        <change period="49">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.01763486406888713" stdev="0.06650905685533609">
+        <change period="50">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.01797842379826752" stdev="0.06706683005178285">
+        <change period="51">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.01832436445403928" stdev="0.06764237478440868">
+        <change period="52">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.01867047560173367" stdev="0.0682233234041192">
+        <change period="53">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.019016744633117328" stdev="0.06882378661321874">
+        <change period="54">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.019366042094307874" stdev="0.06943952840046377">
+        <change period="55">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.01971601030765167" stdev="0.0700277461311492">
+        <change period="56">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.02006615973657679" stdev="0.07060877339760718">
+        <change period="57">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.020416168438197824" stdev="0.07120089375306156">
+        <change period="58">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.020765695205422787" stdev="0.07179046058314095">
+        <change period="59">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.021109715281901056" stdev="0.07234984938036522">
+        <change period="60">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.02145344390323024" stdev="0.07289471948700449">
+        <change period="61">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.021799256189444945" stdev="0.07346671620199687">
+        <change period="62">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.022146918877786977" stdev="0.07402275537912648">
+        <change period="63">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.022496241872315557" stdev="0.07459633258245019">
+        <change period="64">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.022841727703501537" stdev="0.07512225524640649">
+        <change period="65">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.023187793115476304" stdev="0.07564854963893788">
+        <change period="66">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.02353356930687482" stdev="0.07616388131068846">
+        <change period="67">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.02388158932246792" stdev="0.0766795461777484">
+        <change period="68">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.024232089853421235" stdev="0.07722198494337966">
+        <change period="69">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.024582481451952545" stdev="0.07775477045373684">
+        <change period="70">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.02493551871885203" stdev="0.07830136692151149">
+        <change period="71">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.025290785945886827" stdev="0.07885279966759759">
+        <change period="72">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.02564605314036813" stdev="0.07940201269574385">
+        <change period="73">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.02600288023587431" stdev="0.07996115286670619">
+        <change period="74">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.02636315266061272" stdev="0.08051352190203584">
+        <change period="75">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.026723506359627947" stdev="0.08107570827973667">
+        <change period="76">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.027083282767534005" stdev="0.0816060620931472">
+        <change period="77">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.02744816921384843" stdev="0.08215782819618962">
+        <change period="78">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.02780985579789264" stdev="0.08267453896978542">
+        <change period="79">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.028170455162873854" stdev="0.08319043531945677">
+        <change period="80">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.02853208711886133" stdev="0.08370395294140184">
+        <change period="81">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.028897359089391273" stdev="0.08422767958084186">
+        <change period="82">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.029262531251445373" stdev="0.08474732950748726">
+        <change period="83">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.029627273557737113" stdev="0.08527114236449211">
+        <change period="84">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.029992436265212766" stdev="0.08580378646414023">
+        <change period="85">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.030357449149413965" stdev="0.08633684400582656">
+        <change period="86">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.030718650893068664" stdev="0.08686550548558292">
+        <change period="87">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.031081937252613927" stdev="0.08742368191656762">
+        <change period="88">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.031445408047421304" stdev="0.08799348298641312">
+        <change period="89">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+      <zscore mean="0.03180718077185259" stdev="0.0885240039342769">
+        <change period="90">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+    </set>
+  </input>
+  <target>
+    <set id="features">
+      <zscore mean="-0.005088264025675665" stdev="0.04618105204548506">
+        <change period="-20">
+          <variable id="^GSPC"/>
+        </change>
+      </zscore>
+    </set>
+  </target>
+</model>

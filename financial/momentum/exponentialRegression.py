@@ -31,6 +31,8 @@ class ExponentialScikitLearnModel(fm.ScikitLearnModel):
         '''
         Ajust a linear regression model to the log of the target variable
         '''
+        if "normalization" in  self.hyperparameters["output"]:
+            y_train = y_train + abs(y_train.min()) + 1e-6  # Normalization to avoid log(0) and negative values ????? Min-max solution instead of z-score
 
         # Error al tratar con valores negativos e iguales a 0
         y_train_log = np.log(y_train)
@@ -68,16 +70,21 @@ class ExponentialRegressionModelFactory(ModelFactory):
         
         return ExponentialScikitLearnModel(model_id, input_descriptor, output_descriptor, model, hyperparameters)
 
-
+'''
     def output_descriptor(self, hyperparameters: dict, ds: fd.DataStore = None) -> fd.DataDescriptor:
         outputs = fd.Set('outputs')
         for output in hyperparameters["output"]["target"]:
             variable = fd.Variable(output) 
             lookahead = hyperparameters["output"]["lookahead"]
             target = fd.LookAhead(variable, lookahead)
-            outputs.append( target )            
-        return outputs
+            outputs.append( target )     
 
+        if "normalization" in hyperparameters["output"]:
+            normalization = hyperparameters["output"]["normalization"]
+            outputs = self.normalize(normalization, ds, outputs)    
+
+        return outputs
+'''
 
 
 '''

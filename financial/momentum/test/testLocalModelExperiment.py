@@ -33,15 +33,15 @@ class TestLocalModelExperiment(unittest.TestCase):
 
     def test_run(self):
 
-        local_model_experiment = LocalModelExperiment(self.datastore, self.factory, self.name, self.start_year, self.end_year, self.lookahead, self.horizon)
+        local_model_experiment = LocalModelExperiment(self.datastore, self.ticker, self.factory, self.name, self.start_year, self.end_year, self.lookahead, self.horizon)
 
         
-        local_model_experiment.run(self.ticker)
+        local_model_experiment.run()
         prediction_experiment = local_model_experiment.predictions * 100
-
+        print(prediction_experiment)
         prediction_manual = self.manual_model_creation(self.ticker, self.datastore, self.factory, self.start_year, self.end_year, self.lookahead, self.horizon) * 100 - 100
 
-        np.testing.assert_almost_equal(prediction_experiment.to_numpy(), prediction_manual.to_numpy(), decimal=2) # Está bien el manual?
+        np.testing.assert_almost_equal(prediction_experiment.to_numpy(), prediction_manual.to_numpy(), decimal=2)
     
     def manual_model_creation(self, ticker, datastore, factory, start_date, end_date, lookahead, horizon):
 
@@ -86,16 +86,7 @@ class TestLocalModelExperiment(unittest.TestCase):
         forecast = forecast.dropna()
         return forecast
 
-
-    def local_regression_features(ds: fd.DataStore, ticker: str) -> fd.Set:
-                features = fd.Set('Local exponential regression model features')    
-                variable = fd.Variable(ticker)
-                features.append(variable)
-                return features
-
-    def local_regression_features_wrapper(self, ds: fd.DataStore) -> fd.Set:
-                return self.local_regression_features(ds,self.ticker)  # ¿COMO FUNCIONAN LOS WRAPPERS?
-     
+    
     
 if __name__ == '__main__':
     unittest.main()

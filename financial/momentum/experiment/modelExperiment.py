@@ -14,28 +14,19 @@ from sklearn.metrics import r2_score
 
 class ModelExperiment:
     
-    def __init__(self, datastore, model_factory, name:str, start_year:str, end_year:str, lookahead:int=None, horizon:int=None, **kwargs):
+    def __init__(self, datastore, ticker, model_factory, name:str, start_year:str, end_year:str, lookahead:int=None, horizon:int=None, **kwargs):
         self.datastore = datastore
+        self.ticker = ticker
         self.model_factory = model_factory
         self.name = name
         self.start_year = start_year
         self.end_year = end_year
         self.lookahead = lookahead
         self.horizon = horizon
-
-        self.metrics = {
-
-            "MSE": None,
-            "RMSE": None,
-            "MAE": None,
-            "MAPE": None,
-            "R2": None
-        }
         self.predictions = None
-        self.ticker = None
 
 
-    def run(self, ticker):
+    def run(self):
         raise NotImplementedError("Subclasses must implement 'run'")
 
 
@@ -46,14 +37,12 @@ class ModelExperiment:
 
 class LocalModelExperiment(ModelExperiment):
 
-    def __init__(self, datastore, model_factory, name, start_year, end_year, lookahead=20, horizon=90):
+    def __init__(self, datastore, ticker, model_factory, name, start_year, end_year, lookahead=20, horizon=90):
 
-        super().__init__(datastore, model_factory, name, start_year, end_year, lookahead, horizon)
+        super().__init__(datastore, ticker, model_factory, name, start_year, end_year, lookahead, horizon)
 
 
-    def run(self, ticker):
-
-        self.ticker = ticker
+    def run(self):
         
         self.hyperparameters = {
             "input":{
@@ -69,14 +58,11 @@ class LocalModelExperiment(ModelExperiment):
         self.predictions = sLM.storeLocal_data(self.ticker, self.model_factory, self.hyperparameters, self.name, self.datastore, None, self.start_year, self.end_year,  self.lookahead, self.horizon)
         # SE ESTÁ HACIENDO EL OUTPUT MANUALMENTE RELATIVE, COMPROBAR
         # MÉTRICAS CALCULAR CON EXPERIMENT --> SE NECESITA TARGET Y PREDICTION (TARGET = DATOS VERDADEROS)
-
-GLOBAL_HORIZON = 20
-ticker_global = None
 class GlobalModelExperiment(ModelExperiment):
 
-    def __init__(self, datastore, model_factory, name, start_year, end_year, lookahead=20, horizon=GLOBAL_HORIZON):
+    def __init__(self, datastore, ticker, model_factory, name, start_year, end_year, lookahead=20, horizon=90):
 
-        super().__init__(datastore, model_factory, name, start_year, end_year, lookahead, horizon)
+        super().__init__(datastore, ticker, model_factory, name, start_year, end_year, lookahead, horizon)
         # Example: start_year = 1990, end_year = 2024, start_year_split = 1990 + (2024-1990)*5/7 = 2014
         start_year_split = round((int(end_year[:4]) - int(start_year[:4])) * 5/7) + int(start_year[:4])
         # Splits: 2014, 2015, 2016... 2023
@@ -88,22 +74,21 @@ class GlobalModelExperiment(ModelExperiment):
         # Hiperparametros como parametro del constructor
 
         
-    def run(self, ticker): # Run sin paramtros, todo al constructor
+    def run(self): # Run sin paramtros, todo al constructor
 
-        self.ticker = ticker
-        ticker_global = ticker
-        
         
         self.hyperparameters = {
             "input": {
                 "features": "financial.momentum.experiment.modelExperiment.baseline_features",
                 "horizon": self.horizon,
-                "ticker": self.ticker
+                "ticker": self.ticker,
+                "normalization": { "method": "z-score", "start_index": self.start_year, "end_index": self.end_year}
                 },
             "output": {
-                "target": [ticker],
+                "target": [self.ticker],
                 "lookahead": self.lookahead,
                 "prediction": "relative", # "absolute"|"relative"
+                "normalization": { "method": "z-score", "start_index": self.start_year, "end_index": self.end_year}
                 },    
         }
         self.features = self.model_factory.input_descriptor(self.hyperparameters, self.datastore)
@@ -113,7 +98,10 @@ class GlobalModelExperiment(ModelExperiment):
         data_builder.run()
         df = data_builder.dataset
 
-        
+        model = self.model_factory.create_model(self.name, self.hyperparameters, self.datastore)
+        print(model.to_xml_string())
+
+        print(df.columns)
 
         cross_validation = labevaluation.WalkForwardCrossValidation ( self.name, 
                                                                     self.hyperparameters, 
@@ -130,16 +118,15 @@ class GlobalModelExperiment(ModelExperiment):
             
         final_model = labevaluation.ModelTraining(self.name, self.hyperparameters, self.features, self.target, df, self.model_factory)
         final_model.run()
-
+        '''
         self.metrics["MSE"] = final_model.results[self.ticker].MSE()
         self.metrics["RMSE"] = final_model.results[self.ticker].RMSE()
         self.metrics["MAE"] = final_model.results[self.ticker].MAE()
         self.metrics["MAPE"] = final_model.results[self.ticker].MAPE() # NO HACE FALTA --> MÁS ADELANTE, DEVOLVER TARGET Y PREDICTION
-        # self.metrics["R2"] = self.R2()
+        '''
+        self.predictions =  reconstruct_relative_predictions_from_zscore(self.target, final_model.model.get_data(self.datastore, self.start_year, self.end_year))
 
-        self.predictions =  final_model.model.get_data(self.datastore, self.start_year, self.end_year)
-
-
+'''
     def reconstruct_from_relative(self, predictions):
 
         mean = self.target[0].mean
@@ -150,16 +137,7 @@ class GlobalModelExperiment(ModelExperiment):
         reconstructed_final = data / (1 - reconstructed_change)
 
         return reconstructed_final.shift(self.lookahead).dropna()
-
-
-    def R2(self):
-
-        r2 = r2_score(self.predictions, self.reconstruct_from_relative(self.predictions))
-        return r2
-
-    def get_metrics(self):
-        return self.metrics
-
+'''
 
 
 def baseline_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
@@ -175,10 +153,13 @@ def baseline_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
 
         return features
 
-def baseline_features_wrapper(ds: fd.DataStore) -> fd.Set:
-            return baseline_features(ds,ticker_global)
+def reconstruct_relative_predictions_from_zscore(target, predictions):
 
+    mean = target[0].mean
+    stdev = target[0].stdev
 
+    reconstructed_series = predictions * stdev + mean
+    return reconstructed_series
 class ModelExperimentFactory:
     
     @staticmethod
@@ -199,7 +180,9 @@ class ModelExperimentFactory:
             return LocalModelExperiment(datastore, model_factory, name, start_year, end_year, lookahead, horizon)
 
         elif mode == "global":
-            return GlobalModelExperiment(datastore, model_factory, name, start_year, end_year)
+            lookahead = config.get("lookahead", 20)
+            horizon = config.get("horizon", 90)
+            return GlobalModelExperiment(datastore, model_factory, name, start_year, end_year, lookahead, horizon)
 
         else:
             raise ValueError(f"Unknown mode: {mode}")
