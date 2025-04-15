@@ -15,7 +15,7 @@ import financial.model as fm
 import financial.data as fd
 
 from financial.io.file.cache import FileCache
-from financial.momentum.exponentialRegression import ExponentialRegressionModelFactory
+from momentum.models.exponentialRegression import ExponentialRegressionModelFactory
 from financial.momentum.experiment.modelExperiment import LocalModelExperiment
 from financial.momentum.storeLocalModel import storeLocal_data
 

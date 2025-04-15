@@ -11,7 +11,7 @@ import numpy as np
 
 import financial.data as fd
 import financial.model as fm
-import financial.momentum.exponentialRegression as expReg
+import financial.momentum.models.exponentialRegression as expReg
 from financial.lab.models import ModelFactory
 from sklearn.metrics import r2_score
 from financial.io.cache import NoUpdateStrategy

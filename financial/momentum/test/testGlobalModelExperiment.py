@@ -14,7 +14,7 @@ import numpy as np
 
 from financial.io.file.cache import FileCache
 from financial.momentum.experiment.modelExperiment import *
-from financial.momentum.exponentialRegression import ExponentialRegressionModelFactory
+from financial.momentum.models.exponentialRegression import ExponentialRegressionModelFactory
 
 class TestGlobalModelExperiment(unittest.TestCase):
 
@@ -25,9 +25,27 @@ class TestGlobalModelExperiment(unittest.TestCase):
         self.start_year = "1990-01-01"
         self.end_year = "2023-12-31"
         self.lookahead = 20
+        self.horizon = 90
         self.ticker = '^GSPC'
+        self.model_params = None
 
-        global_model_experiment = GlobalModelExperiment(self.datastore, self.ticker, self.factory, self.name, self.start_year, self.end_year, self.lookahead)
+        self.hyperparameters = {
+            "input": {
+                "features": "financial.momentum.experiment.modelExperiment.baseline_features",
+                "horizon": self.horizon,
+                "ticker": self.ticker,
+                "normalization": { "method": "z-score", "start_index": self.start_year, "end_index": self.end_year }
+                },
+            "output": {
+                "target": [self.ticker],
+                "lookahead": self.lookahead,
+                "prediction": "relative",
+                "normalization": { "method": "z-score", "start_index": self.start_year, "end_index": self.end_year }
+                },
+            "model": self.model_params,
+        }
+
+        global_model_experiment = GlobalModelExperiment(self.datastore, self.ticker, self.factory, self.name, self.start_year, self.end_year, self.hyperparameters, self.lookahead)
         global_model_experiment.run()
         self.experiment = global_model_experiment
 
@@ -43,17 +61,20 @@ class TestGlobalModelExperiment(unittest.TestCase):
 
     def test_ticker_not_valid(self):
         with self.assertRaises(KeyError):
-            invalid_model_experiment = GlobalModelExperiment(self.datastore, "INVALID_TICKER", self.factory, self.name, self.start_year, self.end_year, self.lookahead)
+            self.hyperparameters["input"]["ticker"] = "INVALID_TICKER"
+            self.hyperparameters["output"]["target"] = ["INVALID_TICKER"]
+            invalid_model_experiment = GlobalModelExperiment(self.datastore, "INVALID_TICKER", self.factory, self.name, self.start_year, self.end_year, self.hyperparameters, self.lookahead)
             invalid_model_experiment.run()
     
     def test_date_not_valid(self):
         with self.assertRaises(ValueError):
-            invalid_model_experiment = GlobalModelExperiment(self.datastore, self.ticker, self.factory, self.name, "INVALID_DATE", "INVALID_DATE", self.lookahead)
+            invalid_model_experiment = GlobalModelExperiment(self.datastore, self.ticker, self.factory, self.name, "INVALID_DATE", "INVALID_DATE", self.hyperparameters, self.lookahead)
             invalid_model_experiment.run()
 
     def test_horizon_not_valid(self):
         with self.assertRaises(ValueError):
-            invalid_model_experiment = GlobalModelExperiment(self.datastore, self.ticker, self.factory, self.name, self.start_year, self.end_year, self.lookahead, horizon=-1)
+            self.hyperparameters["input"]["horizon"] = -1
+            invalid_model_experiment = GlobalModelExperiment(self.datastore, self.ticker, self.factory, self.name, self.start_year, self.end_year, self.hyperparameters, self.lookahead, horizon=-1)
             invalid_model_experiment.run()
 
     def test_complete(self):
