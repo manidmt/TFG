@@ -99,9 +99,9 @@ class GlobalModelExperiment(ModelExperiment):
         df = data_builder.dataset
 
         model = self.model_factory.create_model(self.name, self.hyperparameters, self.datastore)
-        print(model.to_xml_string())
+        #print(model.to_xml_string())
 
-        print(df.columns)
+        # print(df.columns)
 
         cross_validation = labevaluation.WalkForwardCrossValidation ( self.name, 
                                                                     self.hyperparameters, 
@@ -169,6 +169,7 @@ class ModelExperimentFactory:
         """
         mode = config.get("mode")
         datastore = config.get("datastore")
+        ticker = config.get("ticker")
         model_factory = config.get("model_factory")
         name = config.get("name")
         start_year = config.get("start_year")
@@ -177,12 +178,12 @@ class ModelExperimentFactory:
         if mode == "local":
             lookahead = config.get("lookahead", 20)
             horizon = config.get("horizon", 90)
-            return LocalModelExperiment(datastore, model_factory, name, start_year, end_year, lookahead, horizon)
+            return LocalModelExperiment(datastore, ticker, model_factory, name, start_year, end_year, lookahead, horizon)
 
         elif mode == "global":
             lookahead = config.get("lookahead", 20)
             horizon = config.get("horizon", 90)
-            return GlobalModelExperiment(datastore, model_factory, name, start_year, end_year, lookahead, horizon)
+            return GlobalModelExperiment(datastore, ticker, model_factory, name, start_year, end_year, lookahead, horizon)
 
         else:
             raise ValueError(f"Unknown mode: {mode}")
