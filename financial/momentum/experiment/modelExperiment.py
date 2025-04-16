@@ -30,7 +30,12 @@ class ModelExperiment:
     def run(self):
         raise NotImplementedError("Subclasses must implement 'run'")
 
+    def reconstruct_absolute_predictions_from_relative(self):
+        data = self.datastore.get_data(self.ticker, self.start_year, self.end_year)
 
+        reconstructed_change = - self.predictions
+        reconstructed_final = data / (1-reconstructed_change)
+        return reconstructed_final.shift(self.lookahead).dropna()
 
 
 
@@ -60,7 +65,7 @@ class GlobalModelExperiment(ModelExperiment):
         self.target = None
         # Hiperparametros como parametro del constructor
 
-        print(self.hyperparameters)
+        #print(self.hyperparameters)
 
         
     def run(self): # Run sin paramtros, todo al constructor
@@ -72,7 +77,7 @@ class GlobalModelExperiment(ModelExperiment):
         data_builder.run()
         df = data_builder.dataset
 
-        model = self.model_factory.create_model(self.name, self.hyperparameters, self.datastore)
+        #model = self.model_factory.create_model(self.name, self.hyperparameters, self.datastore)
         #print(model.to_xml_string())
 
         # print(df.columns)
@@ -93,7 +98,16 @@ class GlobalModelExperiment(ModelExperiment):
         final_model = labevaluation.ModelTraining(self.name, self.hyperparameters, self.features, self.target, df, self.model_factory)
         final_model.run()
 
-        self.predictions =  reconstruct_relative_predictions_from_zscore(self.target, final_model.model.get_data(self.datastore, self.start_year, self.end_year))
+        self.predictions = self.reconstruct_relative_predictions_from_zscore(final_model.model.get_data(self.datastore, self.start_year, self.end_year))
+
+    def reconstruct_relative_predictions_from_zscore(self, predictions):
+
+        mean = self.target[0].mean
+        stdev = self.target[0].stdev
+
+        reconstructed_series = predictions * stdev + mean
+        return reconstructed_series
+
 
 
 def baseline_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
@@ -109,13 +123,6 @@ def baseline_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
 
         return features
 
-def reconstruct_relative_predictions_from_zscore(target, predictions):
-
-    mean = target[0].mean
-    stdev = target[0].stdev
-
-    reconstructed_series = predictions * stdev + mean
-    return reconstructed_series
 class ModelExperimentFactory:
     
     @staticmethod

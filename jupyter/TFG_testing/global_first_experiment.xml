@@ -456,8 +456,8 @@
   </input>
   <target>
     <set id="features">
-      <zscore mean="0.00036745790397247084" stdev="0.011442571664865883">
-        <change period="1">
+      <zscore mean="-0.005088264025675665" stdev="0.04618105204548506">
+        <change period="-20">
           <variable id="^GSPC"/>
         </change>
       </zscore>
