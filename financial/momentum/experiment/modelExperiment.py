@@ -94,6 +94,9 @@ class GlobalModelExperiment(ModelExperiment):
         cross_validation.run()
             
         # Final model
+
+        self.train = cross_validation.experiment_results['train'][self.ticker]
+        self.test = cross_validation.experiment_results['test'][self.ticker]
             
         final_model = labevaluation.ModelTraining(self.name, self.hyperparameters, self.features, self.target, df, self.model_factory)
         final_model.run()
