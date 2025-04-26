@@ -19,11 +19,10 @@ class RandomForestModel(fm.ScikitLearnModel):
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
         self.model.fit(X_train, y_train.values.ravel())
 
-
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         prediction = self.model.predict(X)
 
-        # Asegurarse de que la predicción sea 2D (n_samples, 1)
+        # Asegurarse de que la predicción sea 2D (n_samples, 1), realmente es extra teniendo lo de ravel()
         if prediction.ndim == 1:
             prediction = prediction.reshape(-1, 1)
 

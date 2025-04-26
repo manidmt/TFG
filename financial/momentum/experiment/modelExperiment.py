@@ -11,6 +11,11 @@ import financial.lab.evaluation as labevaluation
 import financial.lab.data as labdata
 from sklearn.metrics import r2_score
 
+from dotenv import load_dotenv
+from financial.momentum.utilities import find_dotenv
+
+load_dotenv(dotenv_path=find_dotenv())
+
 
 class ModelExperiment:
     
@@ -35,7 +40,7 @@ class ModelExperiment:
 
         reconstructed_change = - self.predictions
         reconstructed_final = data / (1-reconstructed_change)
-        return reconstructed_final.shift(self.lookahead).dropna()
+        return reconstructed_final.dropna()
 
 
 
@@ -101,7 +106,8 @@ class GlobalModelExperiment(ModelExperiment):
         final_model = labevaluation.ModelTraining(self.name, self.hyperparameters, self.features, self.target, df, self.model_factory)
         final_model.run()
 
-        self.predictions = self.reconstruct_relative_predictions_from_zscore(final_model.model.get_data(self.datastore, self.start_year, self.end_year))
+        #self.predictions = self.reconstruct_relative_predictions_from_zscore(final_model.model.get_data(self.datastore, self.start_year, self.end_year))
+        self.predictions = final_model.model.get_data(self.datastore, self.start_year, self.end_year)
 
     def reconstruct_relative_predictions_from_zscore(self, predictions):
 
@@ -166,14 +172,14 @@ class ModelExperimentFactory:
                 "input": {
                     "features": "financial.momentum.experiment.modelExperiment.baseline_features",
                     "horizon": horizon,
-                    "ticker": ticker,
-                    "normalization": { "method": "z-score", "start_index": start_year, "end_index": end_year }
+                    "ticker": ticker
+                    #"normalization": { "method": "z-score", "start_index": start_year, "end_index": end_year }
                     },
                 "output": {
                     "target": [ticker],
                     "lookahead": lookahead,
-                    "prediction": "relative",
-                    "normalization": { "method": "z-score", "start_index": start_year, "end_index": end_year }
+                    "prediction": "relative"
+                    #"normalization": { "method": "z-score", "start_index": start_year, "end_index": end_year }
                     },
                 "model": model_params,
             }
