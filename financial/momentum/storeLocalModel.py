@@ -60,12 +60,12 @@ def storeLocal_data(ticker,
     Computes and stores the momentum (Beta) and R² for a given ticker using FileCache.
     '''
 
-    cache_path = os.environ.get("CACHE", "./cache") if cache_path is None else cache_path
+    cache_path = os.environ.get("CACHE") + "/" if cache_path is None else cache_path
     # Si no se pasa un DataStore, usar el definido por defecto
     if ds is None:
         
         ds = fd.CachedDataStore(path=os.environ["DATA"], 
-                                cache=FileCache(cache_path=cache_path+"/", update_strategy=NoUpdateStrategy()))
+                                cache=FileCache(cache_path=cache_path, update_strategy=NoUpdateStrategy()))
 
 
     start_date = pd.Timestamp(start_date) if isinstance(start_date, str) else start_date
@@ -108,9 +108,9 @@ def storeLocal_data(ticker,
     
     relative_predicted_values = relative_predicted_values.dropna()
     # Save the series
-    prediction_path = os.path.join(cache_path, f"model_momentum-{model_name}-{ticker}")
+    prediction_path = os.path.join(cache_path) #, f"model_momentum-{model_name}-{ticker}")
 
-    store_results(prediction_path, ticker, model_name, relative_predicted_values, slope_series, r2_series)
+    store_results(cache_path, ticker, model_name, relative_predicted_values, slope_series, r2_series)
     '''
     with open(prediction_path, 'wb') as file:
         pickle.dump(relative_predicted_values, file)
@@ -134,21 +134,23 @@ def storeLocal_data(ticker,
     return relative_predicted_values
 
 
-def store_results(prediction_path: str, ticker: str, model_name: str, predictions: pd.Series, slope_series: pd.Series = None, r2_series: pd.Series = None):
+def store_results(cache_path: str, ticker: str, model_name: str, predictions: pd.Series, slope_series: pd.Series = None, r2_series: pd.Series = None):
+
+    prediction_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}")
     with open(prediction_path, 'wb') as file:
         pickle.dump(predictions, file)
     
     if slope_series is not None:
         slope_series = slope_series.dropna()
         slope_series = slope_series.copy()
-        slope_path = os.path.join(prediction_path, f"model-momentum-{model_name}-{ticker}@slope")
+        slope_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@slope")
         with open(slope_path, 'wb') as file:
             pickle.dump(slope_series, file)
 
     if r2_series is not None:
         r2_series = r2_series.dropna()
         r2_series = r2_series.copy()
-        r2_path = os.path.join(prediction_path, f"model-momentum-{model_name}-{ticker}@r2")
+        r2_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@r2")
         with open(r2_path, 'wb') as file:
             pickle.dump(r2_series, file)
 
@@ -184,7 +186,7 @@ def store_exponentialModel_data(ticker,
 
     hyperparameters = {
         "input": {
-            "features": "local_features_wrapper"
+            "features": "financial.momentum.storeLocalModel.local_features"
             # "normalization": { "method": "z-score", "start_index": start_date, "end_index": end_date }
             },
         "output": {
