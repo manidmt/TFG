@@ -4,6 +4,117 @@ Class for advanced Keras models with custom layers and training methods.
 @author: Manuel Díaz-Meco (manidmt5@gmail.com)
 '''
 
+import numpy as np
+import pandas as pd
+import keras
+from financial.momentum import KerasModel
+import financial.data as fd
+
+
+
+class KerasAdvancedModel(KerasModel):
+
+    def __init__(self, name: str, sources: fd.DataDescriptor, target: fd.DataDescriptor, model: keras.Model=None, hyperparameters: dict=None):
+        super().__init__(name, sources, target, model, hyperparameters)
+        self.architecture = hyperparameters.get('model',{}).get('architecture', 'mlp')
+
+
+    def reshape_input(self, X):
+        """
+        Reshape input based on architecture. RNN and CNN need 3D input.
+        """
+        if self.architecture in ["rnn", "lstm", "cnn"]:
+            if isinstance(X, pd.DataFrame):
+                X = X.values
+            n_samples, n_features_total = X.shape
+            timesteps = self.hyperparameters["input"]["horizon"]
+            n_features = n_features_total // timesteps
+            return X.reshape((n_samples, timesteps, n_features))
+        return X  # MLP no requiere reshape
+
+    def fit(self, X_train, y_train):
+
+        if self.architecture == "mlp":
+            return super().fit(X_train, y_train)
+
+        X_train = self.reshape_input(X_train)
+        if isinstance(y_train, (pd.Series, pd.DataFrame)):
+            y_train = y_train.values
+
+        optimizer_params = self.optimizer_hyperparameters()
+
+        self.model.compile(
+            loss=optimizer_params["loss"],
+            optimizer=optimizer_params["optimizer"],
+            metrics=optimizer_params["metrics"]
+        )
+
+        self.model.fit(
+            X_train, y_train,
+            epochs=optimizer_params["epochs"],
+            batch_size=optimizer_params["batch_size"],
+            validation_split=optimizer_params["validation_split"],
+            callbacks=[optimizer_params["stop"]] if optimizer_params["stop"] else None
+        )
+    
+    def initialize_model(self):
+        
+        if self.architecture == "mlp":
+            return super().initialize_model()
+
+        layers = self.hyperparameters["topology"]["layers"]
+        activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
+        activation_output = self.hyperparameters["topology"]["activation"]["output"]
+        horizon = self.hyperparameters["input"]["horizon"]
+        n_features = 1  # por ahora un ticker
+
+        model = keras.models.Sequential()
+
+        if self.architecture in ["rnn", "lstm"]:
+            model.add(keras.layers.Input(shape=(horizon, n_features)))
+            RNNLayer = keras.layers.LSTM if self.architecture == "lstm" else keras.layers.SimpleRNN
+            for units in layers[:-1]:
+                model.add(RNNLayer(units, return_sequences=True))
+            model.add(RNNLayer(layers[-1]))
+            model.add(keras.layers.Dense(1, activation=activation_output))
+
+        elif self.architecture == "cnn":
+            model.add(keras.layers.Input(shape=(horizon, n_features)))
+            for units in layers[:-1]:
+                model.add(keras.layers.Conv1D(filters=units, kernel_size=3, activation=activation_hidden, padding='same'))
+                model.add(keras.layers.MaxPooling1D(pool_size=2))
+            model.add(keras.layers.Flatten())
+            model.add(keras.layers.Dense(layers[-1], activation=activation_output))
+
+        else:
+            raise ValueError(f"Unsupported architecture: {self.architecture}")
+
+        return model
+    
+
+
+
+from financial.lab.models import ModelFactory
+import financial.data as fd
+
+class KerasAdvancedModelFactory(ModelFactory):
+    """
+    Crea modelos Keras avanzados (RNN, LSTM, etc.) integrados con el sistema de predicción.
+    """
+
+    def create_model_from_descriptors(self, 
+                                      model_id: str, 
+                                      hyperparameters: dict, 
+                                      input_descriptor: fd.DataDescriptor, 
+                                      output_descriptor: fd.DataDescriptor) -> KerasAdvancedModel:
+        return KerasAdvancedModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
+
+
+
+
+
+
+'''
 import os
 import numpy as np
 import keras
@@ -62,3 +173,117 @@ class KerasAdvancedModel:
             validation_split=optimizer_params["validation_split"],
             callbacks=[optimizer_params["stop"]] if optimizer_params["stop"] else None
         )
+
+        
+
+
+
+
+
+
+
+
+
+
+        ________________
+        ________________
+
+import numpy as np
+import pandas as pd
+from tensorflow import keras
+from financial.model import KerasModel
+
+
+class KerasAdvancedModel(KerasModel):
+    """
+    Keras model that supports advanced architectures like RNN, LSTM, and CNN.
+    """
+
+    def __init__(self, name, sources, target, model=None, hyperparameters=None):
+        super().__init__(name, sources, target, model, hyperparameters)
+        self.architecture = hyperparameters.get("model", {}).get("architecture", "mlp")
+
+    def reshape_input(self, X):
+        """
+        Reshape input based on architecture. RNN and CNN need 3D input.
+        """
+        if self.architecture in ["rnn", "lstm", "cnn"]:
+            # X: DataFrame or 2D array (n_samples, n_features * timesteps)
+            if isinstance(X, pd.DataFrame):
+                X = X.values
+            n_samples, n_features_total = X.shape
+            # Horizon es el número de timesteps
+            timesteps = self.hyperparameters["input"]["horizon"]
+            n_features = n_features_total // timesteps
+            return X.reshape((n_samples, timesteps, n_features))
+        return X  # MLP expects 2D
+
+    def fit(self, X_train, y_train):
+        X_train = self.reshape_input(X_train)
+
+        if isinstance(y_train, (pd.Series, pd.DataFrame)):
+            y_train = y_train.values
+
+        optimizer_params = self.optimizer_hyperparameters()
+
+        self.model.compile(
+            optimizer=optimizer_params["optimizer"],
+            loss=optimizer_params["loss"],
+            metrics=optimizer_params["metrics"]
+        )
+
+        self.model.fit(
+            X_train, y_train,
+            epochs=optimizer_params["epochs"],
+            batch_size=optimizer_params["batch_size"],
+            validation_split=optimizer_params["validation_split"],
+            callbacks=[optimizer_params["stop"]] if optimizer_params["stop"] else None
+        )
+
+    def predict(self, X):
+        X = self.reshape_input(X)
+        prediction = self.model.predict(X)
+        return prediction if prediction.ndim > 1 else prediction.reshape(-1, 1)
+
+    def initialize_model(self):
+        """
+        Construye la red según la arquitectura indicada.
+        """
+        architecture = self.architecture
+        layers = self.hyperparameters["topology"]["layers"]
+        activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
+        activation_output = self.hyperparameters["topology"]["activation"]["output"]
+        input_dim = self.sources.size()
+        horizon = self.hyperparameters["input"]["horizon"]
+        n_features = 1  # por ahora solo un ticker
+
+        model = keras.models.Sequential()
+
+        if architecture == "mlp":
+            model.add(keras.layers.Input(shape=(input_dim,)))
+            for units in layers[:-1]:
+                model.add(keras.layers.Dense(units, activation=activation_hidden))
+            model.add(keras.layers.Dense(layers[-1], activation=activation_output))
+
+        elif architecture in ["rnn", "lstm"]:
+            model.add(keras.layers.Input(shape=(horizon, n_features)))
+            RNNLayer = keras.layers.LSTM if architecture == "lstm" else keras.layers.SimpleRNN
+            for units in layers[:-1]:
+                model.add(RNNLayer(units, return_sequences=True))
+            model.add(RNNLayer(layers[-1]))
+            model.add(keras.layers.Dense(1, activation=activation_output))
+
+        elif architecture == "cnn":
+            model.add(keras.layers.Input(shape=(horizon, n_features)))
+            for units in layers[:-1]:
+                model.add(keras.layers.Conv1D(filters=units, kernel_size=3, activation=activation_hidden, padding='same'))
+                model.add(keras.layers.MaxPooling1D(pool_size=2))
+            model.add(keras.layers.Flatten())
+            model.add(keras.layers.Dense(layers[-1], activation=activation_output))
+
+        else:
+            raise ValueError(f"Unsupported architecture: {architecture}")
+
+        return model
+
+'''
