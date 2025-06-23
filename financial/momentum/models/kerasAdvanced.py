@@ -56,6 +56,14 @@ class KerasAdvancedModel(KerasModel):
             validation_split=optimizer_params["validation_split"],
             callbacks=[optimizer_params["stop"]] if optimizer_params["stop"] else None
         )
+
+    def predict(self, X):
+        if self.architecture == "mlp":
+            return super().predict(X)
+
+        X = self.reshape_input(X)
+        prediction = self.model.predict(X)
+        return prediction if prediction.ndim > 1 else prediction.reshape(-1, 1)
     
     def initialize_model(self):
         
