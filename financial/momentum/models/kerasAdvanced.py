@@ -7,7 +7,7 @@ Class for advanced Keras models with custom layers and training methods.
 import numpy as np
 import pandas as pd
 import keras
-from financial.momentum import KerasModel
+from financial.model import KerasModel
 import financial.data as fd
 
 
@@ -15,8 +15,11 @@ import financial.data as fd
 class KerasAdvancedModel(KerasModel):
 
     def __init__(self, name: str, sources: fd.DataDescriptor, target: fd.DataDescriptor, model: keras.Model=None, hyperparameters: dict=None):
+        # print(f"Hyperparameters: {hyperparameters}")
+        # print(f"{hyperparameters.get('model', {}).get('architecture', 'mlp')} architecture selected for model {name}")
+        self.architecture = hyperparameters.get('architecture', 'mlp')
         super().__init__(name, sources, target, model, hyperparameters)
-        self.architecture = hyperparameters.get('model',{}).get('architecture', 'mlp')
+        
 
 
     def reshape_input(self, X):
@@ -82,7 +85,7 @@ class KerasAdvancedModel(KerasModel):
             model.add(keras.layers.Input(shape=(horizon, n_features)))
             RNNLayer = keras.layers.LSTM if self.architecture == "lstm" else keras.layers.SimpleRNN
             for units in layers[:-1]:
-                model.add(RNNLayer(units, return_sequences=True))
+                model.add(RNNLayer(units, return_sequences=True)) # podría ponerse el hidden también
             model.add(RNNLayer(layers[-1]))
             model.add(keras.layers.Dense(1, activation=activation_output))
 
