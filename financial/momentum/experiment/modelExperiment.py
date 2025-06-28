@@ -40,9 +40,14 @@ class ModelExperiment:
 
         reconstructed_change = - self.predictions
         reconstructed_final = data / (1-reconstructed_change)
+        return reconstructed_final.shift(self.lookahead).dropna()
+
+    def reconstruct_relative_predictions_from_relative_future(self):
+        data = self.datastore.get_data(self.ticker, self.start_year, self.end_year)
+
+        reconstructed_change = - self.predictions
+        reconstructed_final = data / (1-reconstructed_change)
         return reconstructed_final.dropna()
-
-
 
 
 
@@ -115,7 +120,7 @@ class GlobalModelExperiment(ModelExperiment):
         stdev = self.target[0].stdev
 
         reconstructed_series = predictions * stdev + mean
-        return reconstructed_series
+        return reconstructed_series.shift(self.lookahead).dropna()
 
 
 
@@ -131,6 +136,24 @@ def baseline_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
             features.append( fd.Change(variable, i) )
 
         return features
+
+
+def multi_ticker_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
+    """
+    Define los tickers que se usarán como features de entrada para modelos multivariados.
+    """
+    tickers = hyperparameters["input"]["ticker"]
+    if isinstance(tickers, str):
+        tickers = [tickers]
+    horizon = hyperparameters["input"]["horizon"]
+    
+    features = fd.Set('features')
+    for ticker in tickers:
+        for i in range(1, horizon + 1):
+            features.append(fd.Change(fd.Variable(ticker), i))
+    return features
+
+
 
 class ModelExperimentFactory:
     
@@ -150,6 +173,18 @@ class ModelExperimentFactory:
         horizon = config.get("horizon", 90)
 
         model_params = config.get("model_params", {})
+        
+        if isinstance(ticker, str):
+            ticker_list = [ticker]
+        else:
+            ticker_list = ticker
+
+        if len(ticker_list) > 1:
+            input_features = "financial.momentum.experiment.modelExperiment.multi_ticker_features"
+        else:
+            input_features = "financial.momentum.experiment.modelExperiment.baseline_features"
+
+        ticker = ticker_list[0]
 
         if mode == "local":
             hyperparameters = {
@@ -170,7 +205,7 @@ class ModelExperimentFactory:
         elif mode == "global":
             hyperparameters = {
                 "input": {
-                    "features": "financial.momentum.experiment.modelExperiment.baseline_features",
+                    "features": input_features,
                     "horizon": horizon,
                     "ticker": ticker
                     #"normalization": { "method": "z-score", "start_index": start_year, "end_index": end_year }
