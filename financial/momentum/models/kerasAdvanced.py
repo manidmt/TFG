@@ -7,16 +7,17 @@ Class for advanced Keras models with custom layers and training methods.
 import numpy as np
 import pandas as pd
 import keras
+import tensorflow as tf
 from financial.model import KerasModel
 import financial.data as fd
 
 
-'''
+
 class KerasAdvancedModel(KerasModel):
 
     def __init__(self, name: str, sources: fd.DataDescriptor, target: fd.DataDescriptor, model: keras.Model=None, hyperparameters: dict=None):
         # print(f"Hyperparameters: {hyperparameters}")
-        # print(f"{hyperparameters.get('model', {}).get('architecture', 'mlp')} architecture selected for model {name}")
+        print(f"{hyperparameters.get('model', {}).get('architecture', 'mlp')} architecture selected for model {name}")
         self.architecture = hyperparameters.get('architecture', 'mlp')
         super().__init__(name, sources, target, model, hyperparameters)
         
@@ -37,7 +38,7 @@ class KerasAdvancedModel(KerasModel):
         return X  # MLP no requiere reshape
 
     def fit(self, X_train, y_train):
-
+        print(f"Fitting model {self.name} with architecture {self.architecture}")
         if self.architecture == "mlp":
             return super().fit(X_train, y_train)
 
@@ -46,12 +47,16 @@ class KerasAdvancedModel(KerasModel):
             y_train = y_train.values
 
         optimizer_params = self.optimizer_hyperparameters()
-
+        print(f"Optimizer parameters: {optimizer_params}")
         self.model.compile(
             loss=optimizer_params["loss"],
             optimizer=optimizer_params["optimizer"],
             metrics=optimizer_params["metrics"]
         )
+
+        print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
+        print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
+
 
         self.model.fit(
             X_train, y_train,
@@ -102,7 +107,7 @@ class KerasAdvancedModel(KerasModel):
             raise ValueError(f"Unsupported architecture: {self.architecture}")
 
         return model
-'''
+
     
 class RecurrentModel(KerasModel):
     """
@@ -121,10 +126,13 @@ class RecurrentModel(KerasModel):
             X = X.values
         n_samples, n_features_total = X.shape
         timesteps = self.hyperparameters["input"]["horizon"]
-        assert n_features_total % timesteps == 0, "Incompatible shape: total features no divisible by timesteps"
+        assert n_features_total % timesteps == 0, (
+            f"Incompatible shape: expected features to be divisible by horizon={timesteps}, "
+            f"but got total={n_features_total}"
+        )
         n_features = n_features_total // timesteps
+        #print(f"Reshaping input to: (n_samples={n_samples}, timesteps={timesteps}, n_features={n_features})")
         return X.reshape((n_samples, timesteps, n_features))
-
 
     def fit(self, X_train, y_train):
 
@@ -140,6 +148,9 @@ class RecurrentModel(KerasModel):
             metrics=optimizer_params["metrics"]
         )
 
+        print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
+        print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
+
         self.model.fit(
             X_train, y_train,
             epochs=optimizer_params["epochs"],
@@ -147,12 +158,14 @@ class RecurrentModel(KerasModel):
             validation_split=optimizer_params["validation_split"],
             callbacks=[optimizer_params["stop"]] if optimizer_params["stop"] else None
         )
+        
 
     def predict(self, X):
 
         X = self.reshape_input(X)
         prediction = self.model.predict(X)
         return prediction if prediction.ndim > 1 else prediction.reshape(-1, 1)
+        
 
     def initialize_model(self):
 
@@ -160,7 +173,8 @@ class RecurrentModel(KerasModel):
         # activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
         horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size()  # Para un ticker sería 1
+        n_features = self.sources.size() // horizon  # Para un ticker sería 1
+        #print(self.sources, n_features)
 
         model = keras.models.Sequential()
         model.add(keras.layers.Input(shape=(horizon, n_features)))
@@ -171,9 +185,9 @@ class RecurrentModel(KerasModel):
         model.add(keras.layers.Dense(1, activation=activation_output))
 
         return model
-        
+ 
 
-
+ 
 class ConvolutionalModel(KerasModel):
     """
     Keras model that supports advanced architectures like CNN.
@@ -232,7 +246,7 @@ class ConvolutionalModel(KerasModel):
         activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
         horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size()
+        n_features = self.sources.size() // horizon
 
         model = keras.models.Sequential()
 
@@ -248,13 +262,58 @@ class ConvolutionalModel(KerasModel):
             model.add(keras.layers.Input(shape=(horizon, n_features, 1)))
             for units in layers[:-1]:
                 model.add(keras.layers.Conv2D(filters=units, kernel_size=(3, 3), activation=activation_hidden, padding='same'))
-                model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+                model.add(keras.layers.MaxPooling2D(pool_size=(2, 1)))
             model.add(keras.layers.Flatten())
             model.add(keras.layers.Dense(layers[-1], activation=activation_output))
 
         else:
             raise ValueError(f"Unsupported CNN architecture: {self.architecture}")
     
+        return model
+
+
+class TransformerModel(KerasModel):
+    def __init__(self, name, sources, target, model=None, hyperparameters=None):
+        self.architecture = hyperparameters.get("model", {}).get("architecture", "transformer")
+        super().__init__(name, sources, target, model, hyperparameters)
+
+    def reshape_input(self, X):
+        if isinstance(X, pd.DataFrame):
+            X = X.values
+        n_samples, n_features_total = X.shape
+        timesteps = self.hyperparameters["input"]["horizon"]
+        assert n_features_total % timesteps == 0, "Incompatible shape: total features no divisible by timesteps"
+        n_features = n_features_total // timesteps
+        return X.reshape((n_samples, timesteps, n_features))
+
+    def initialize_model(self):
+        horizon = self.hyperparameters["input"]["horizon"]
+        n_features = self.sources.size() // horizon
+        num_heads = self.hyperparameters["model"].get("num_heads", 2)
+        ff_dim = self.hyperparameters["model"].get("ff_dim", 64)
+        dropout_rate = self.hyperparameters["model"].get("dropout", 0.1)
+        activation_output = self.hyperparameters["topology"]["activation"]["output"]
+
+        inputs = keras.Input(shape=(horizon, n_features))
+        
+        # Self-attention
+        x = keras.layers.LayerNormalization()(inputs)
+        attn_output = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=n_features)(x, x)
+        x = keras.layers.Add()([x, attn_output])
+        x = keras.layers.Dropout(dropout_rate)(x)
+        
+        # Feedforward
+        x2 = keras.layers.LayerNormalization()(x)
+        x2 = keras.layers.Dense(ff_dim, activation="relu")(x2)
+        x2 = keras.layers.Dense(n_features)(x2)
+        x = keras.layers.Add()([x, x2])
+        x = keras.layers.Dropout(dropout_rate)(x)
+        
+        # Output
+        x = keras.layers.GlobalAveragePooling1D()(x)
+        outputs = keras.layers.Dense(1, activation=activation_output)(x)
+
+        model = keras.Model(inputs=inputs, outputs=outputs)
         return model
 
 
@@ -276,11 +335,23 @@ class KerasAdvancedModelFactory(ModelFactory):
             return RecurrentModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
         elif self.architecture in ["cnn", "cnn2d"]:
             return ConvolutionalModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
+        elif self.architecture == "transformer":
+            return TransformerModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
         else:
             return KerasModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
 
 
+class KerasAdvancedModelFactory2(ModelFactory):
+    """
+    Crea modelos Keras avanzados (RNN, LSTM, CNN, Transformer) integrados con el sistema de predicción.
+    """
 
+    def create_model_from_descriptors(self, 
+                                      model_id: str, 
+                                      hyperparameters: dict, 
+                                      input_descriptor: fd.DataDescriptor, 
+                                      output_descriptor: fd.DataDescriptor):
+        return KerasAdvancedModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
 
 
 

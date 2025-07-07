@@ -125,17 +125,17 @@ class GlobalModelExperiment(ModelExperiment):
 
 
 def baseline_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
-        features = fd.Set('Baseline features')
-        
-        ticker = hyperparameters["input"]["ticker"]
-        horizon = hyperparameters["input"]["horizon"]
+    features = fd.Set('Baseline features')
+    
+    ticker = hyperparameters["input"]["ticker"]
+    horizon = hyperparameters["input"]["horizon"]
 
-        variable = fd.Variable(ticker)
-        #features.append(variable)
-        for i in range(1, horizon+1): 
-            features.append( fd.Change(variable, i) )
+    variable = fd.Variable(ticker)
+    #features.append(variable)
+    for i in range(1, horizon+1): 
+        features.append( fd.Change(variable, i) )
 
-        return features
+    return features
 
 
 def multi_ticker_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
