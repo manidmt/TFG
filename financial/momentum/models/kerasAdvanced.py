@@ -4,114 +4,136 @@ Class for advanced Keras models with custom layers and training methods.
 @author: Manuel Díaz-Meco (manidmt5@gmail.com)
 '''
 
-import numpy as np
 import pandas as pd
 import keras
-import tensorflow as tf
 from financial.model import KerasModel
+import financial.data as fd
+from financial.lab.models import ModelFactory
 import financial.data as fd
 
 
 
-class KerasAdvancedModel(KerasModel):
+# class KerasAdvancedModel(KerasModel):
+#     """
+#     Keras model that supports advanced architectures like RNN, LSTM, CNN, Transformer.
+#     It extends the KerasModel class to provide custom training and prediction methods.
+#     It allows for flexible input reshaping based on the architecture specified in hyperparameters.
 
-    def __init__(self, name: str, sources: fd.DataDescriptor, target: fd.DataDescriptor, model: keras.Model=None, hyperparameters: dict=None):
-        # print(f"Hyperparameters: {hyperparameters}")
-        print(f"{hyperparameters.get('model', {}).get('architecture', 'mlp')} architecture selected for model {name}")
-        self.architecture = hyperparameters.get('architecture', 'mlp')
-        super().__init__(name, sources, target, model, hyperparameters)
+#     Attributes:
+#         architecture (str): The architecture of the model (e.g., 'mlp', 'rnn', 'lstm', 'cnn', 'transformer').
+#         name (str): The name of the model.
+#         sources (fd.DataDescriptor): The input data descriptor.
+#         target (fd.DataDescriptor): The target data descriptor.
+#         model (keras.Model): The Keras model instance.
+#         hyperparameters (dict): Hyperparameters for the model, including architecture, topology, and input/output configurations.
+#     """
+#     def __init__(self, name: str, sources: fd.DataDescriptor, target: fd.DataDescriptor, model: keras.Model=None, hyperparameters: dict=None):
+#         # print(f"Hyperparameters: {hyperparameters}")
+#         print(f"{hyperparameters.get('model', {}).get('architecture', 'mlp')} architecture selected for model {name}")
+#         self.architecture = hyperparameters.get('architecture', 'mlp')
+#         super().__init__(name, sources, target, model, hyperparameters)
         
 
 
-    def reshape_input(self, X):
-        """
-        Reshape input based on architecture. RNN and CNN need 3D input.
-        """
-        if self.architecture in ["rnn", "lstm", "cnn"]:
-            if isinstance(X, pd.DataFrame):
-                X = X.values
-            n_samples, n_features_total = X.shape
-            timesteps = self.hyperparameters["input"]["horizon"]
-            assert n_features_total % timesteps == 0, "Incompatible shape: total features no divisible by timesteps"
-            n_features = n_features_total // timesteps
-            return X.reshape((n_samples, timesteps, n_features))
-        return X  # MLP no requiere reshape
+#     def reshape_input(self, X):
+#         """
+#         Reshape input based on architecture. RNN and CNN need 3D input.
+#         """
+#         if self.architecture in ["rnn", "lstm", "cnn"]:
+#             if isinstance(X, pd.DataFrame):
+#                 X = X.values
+#             n_samples, n_features_total = X.shape
+#             timesteps = self.hyperparameters["input"]["horizon"]
+#             assert n_features_total % timesteps == 0, "Incompatible shape: total features no divisible by timesteps"
+#             n_features = n_features_total // timesteps
+#             return X.reshape((n_samples, timesteps, n_features))
+#         return X  # MLP no requiere reshape
 
-    def fit(self, X_train, y_train):
-        print(f"Fitting model {self.name} with architecture {self.architecture}")
-        if self.architecture == "mlp":
-            return super().fit(X_train, y_train)
+#     def fit(self, X_train, y_train):
+#         print(f"Fitting model {self.name} with architecture {self.architecture}")
+#         if self.architecture == "mlp":
+#             return super().fit(X_train, y_train)
 
-        X_train = self.reshape_input(X_train)
-        if isinstance(y_train, (pd.Series, pd.DataFrame)):
-            y_train = y_train.values
+#         X_train = self.reshape_input(X_train)
+#         if isinstance(y_train, (pd.Series, pd.DataFrame)):
+#             y_train = y_train.values
 
-        optimizer_params = self.optimizer_hyperparameters()
-        print(f"Optimizer parameters: {optimizer_params}")
-        self.model.compile(
-            loss=optimizer_params["loss"],
-            optimizer=optimizer_params["optimizer"],
-            metrics=optimizer_params["metrics"]
-        )
+#         optimizer_params = self.optimizer_hyperparameters()
+#         print(f"Optimizer parameters: {optimizer_params}")
+#         self.model.compile(
+#             loss=optimizer_params["loss"],
+#             optimizer=optimizer_params["optimizer"],
+#             metrics=optimizer_params["metrics"]
+#         )
 
-        print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
-        print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
+#         print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
+#         print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
 
 
-        self.model.fit(
-            X_train, y_train,
-            epochs=optimizer_params["epochs"],
-            batch_size=optimizer_params["batch_size"],
-            validation_split=optimizer_params["validation_split"],
-            callbacks=[optimizer_params["stop"]] if optimizer_params["stop"] else None
-        )
+#         self.model.fit(
+#             X_train, y_train,
+#             epochs=optimizer_params["epochs"],
+#             batch_size=optimizer_params["batch_size"],
+#             validation_split=optimizer_params["validation_split"],
+#             callbacks=[optimizer_params["stop"]] if optimizer_params["stop"] else None
+#         )
 
-    def predict(self, X):
-        if self.architecture == "mlp":
-            return super().predict(X)
+#     def predict(self, X):
+#         if self.architecture == "mlp":
+#             return super().predict(X)
 
-        X = self.reshape_input(X)
-        prediction = self.model.predict(X)
-        return prediction if prediction.ndim > 1 else prediction.reshape(-1, 1)
+#         X = self.reshape_input(X)
+#         prediction = self.model.predict(X)
+#         return prediction if prediction.ndim > 1 else prediction.reshape(-1, 1)
     
-    def initialize_model(self):
+#     def initialize_model(self):
         
-        if self.architecture == "mlp":
-            return super().initialize_model()
+#         if self.architecture == "mlp":
+#             return super().initialize_model()
 
-        layers = self.hyperparameters["topology"]["layers"]
-        activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
-        activation_output = self.hyperparameters["topology"]["activation"]["output"]
-        horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size()  # Para un ticker sería 1
+#         layers = self.hyperparameters["topology"]["layers"]
+#         activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
+#         activation_output = self.hyperparameters["topology"]["activation"]["output"]
+#         horizon = self.hyperparameters["input"]["horizon"]
+#         n_features = self.sources.size()  # Para un ticker sería 1
 
-        model = keras.models.Sequential()
+#         model = keras.models.Sequential()
 
-        if self.architecture in ["rnn", "lstm"]:
-            model.add(keras.layers.Input(shape=(horizon, n_features)))
-            RNNLayer = keras.layers.LSTM if self.architecture == "lstm" else keras.layers.SimpleRNN
-            for units in layers[:-1]:
-                model.add(RNNLayer(units, return_sequences=True)) # podría ponerse el hidden también
-            model.add(RNNLayer(layers[-1]))
-            model.add(keras.layers.Dense(1, activation=activation_output))
+#         if self.architecture in ["rnn", "lstm"]:
+#             model.add(keras.layers.Input(shape=(horizon, n_features)))
+#             RNNLayer = keras.layers.LSTM if self.architecture == "lstm" else keras.layers.SimpleRNN
+#             for units in layers[:-1]:
+#                 model.add(RNNLayer(units, return_sequences=True)) # podría ponerse el hidden también
+#             model.add(RNNLayer(layers[-1]))
+#             model.add(keras.layers.Dense(1, activation=activation_output))
 
-        elif self.architecture == "cnn":
-            model.add(keras.layers.Input(shape=(horizon, n_features)))
-            for units in layers[:-1]:
-                model.add(keras.layers.Conv1D(filters=units, kernel_size=3, activation=activation_hidden, padding='same'))
-                model.add(keras.layers.MaxPooling1D(pool_size=2))
-            model.add(keras.layers.Flatten())
-            model.add(keras.layers.Dense(layers[-1], activation=activation_output))
+#         elif self.architecture == "cnn":
+#             model.add(keras.layers.Input(shape=(horizon, n_features)))
+#             for units in layers[:-1]:
+#                 model.add(keras.layers.Conv1D(filters=units, kernel_size=3, activation=activation_hidden, padding='same'))
+#                 model.add(keras.layers.MaxPooling1D(pool_size=2))
+#             model.add(keras.layers.Flatten())
+#             model.add(keras.layers.Dense(layers[-1], activation=activation_output))
 
-        else:
-            raise ValueError(f"Unsupported architecture: {self.architecture}")
+#         else:
+#             raise ValueError(f"Unsupported architecture: {self.architecture}")
 
-        return model
+#         return model
 
     
 class RecurrentModel(KerasModel):
     """
     Keras model that supports advanced architectures like RNN LSTM.
+    It extends the KerasModel class to provide custom training and prediction methods.
+    It allows for flexible input reshaping based on the architecture specified in hyperparameters.
+
+    Attributes:
+        architecture (str): The architecture of the model (e.g., 'rnn', 'lstm').
+        name (str): The name of the model.
+        sources (fd.DataDescriptor): The input data descriptor.
+        target (fd.DataDescriptor): The target data descriptor.
+        model (keras.Model): The Keras model instance.
+        hyperparameters (dict): Hyperparameters for the model, including architecture, topology, and input
     """
 
     def __init__(self, name: str, sources: fd.DataDescriptor, target: fd.DataDescriptor, model: keras.Model=None, hyperparameters: dict=None):
@@ -120,7 +142,10 @@ class RecurrentModel(KerasModel):
         
     def reshape_input(self, X):
         """
-        Reshape input based on architecture. RNN and CNN need 3D input.
+        Reshape input based on architecture. RNN needs 3D input.
+
+        Args:
+            X (pd.DataFrame or np.ndarray): Input data to reshape.
         """
         if isinstance(X, pd.DataFrame):
             X = X.values
@@ -135,6 +160,13 @@ class RecurrentModel(KerasModel):
         return X.reshape((n_samples, timesteps, n_features))
 
     def fit(self, X_train, y_train):
+        """
+        Fit the model to the training data.
+
+        Args:
+            X_train (pd.DataFrame or np.ndarray): Training features.
+            y_train (pd.Series or np.ndarray): Training target.
+        """
 
         X_train = self.reshape_input(X_train)
         if isinstance(y_train, (pd.Series, pd.DataFrame)):
@@ -161,26 +193,40 @@ class RecurrentModel(KerasModel):
         
 
     def predict(self, X):
+        """
+        Predict the target variable using the trained model.
 
+        Args:
+            X (pd.DataFrame or np.ndarray): Input features for prediction.
+
+        Returns:
+            np.ndarray: Predicted values.
+        """
         X = self.reshape_input(X)
         prediction = self.model.predict(X)
         return prediction if prediction.ndim > 1 else prediction.reshape(-1, 1)
         
 
     def initialize_model(self):
+        """
+        Initialize the Keras model based on the specified architecture and hyperparameters.
+
+        Returns:
+            keras.Model: The initialized Keras model.
+        """
 
         layers = self.hyperparameters["topology"]["layers"]
         # activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
         horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size() // horizon  # Para un ticker sería 1
+        n_features = self.sources.size() // horizon  # Number of tickers
         #print(self.sources, n_features)
 
         model = keras.models.Sequential()
         model.add(keras.layers.Input(shape=(horizon, n_features)))
         RNNLayer = keras.layers.LSTM if self.architecture == "lstm" else keras.layers.SimpleRNN
         for units in layers[:-1]:
-            model.add(RNNLayer(units, return_sequences=True)) # podría ponerse el hidden también
+            model.add(RNNLayer(units, return_sequences=True))
         model.add(RNNLayer(layers[-1]))
         model.add(keras.layers.Dense(1, activation=activation_output))
 
@@ -191,6 +237,16 @@ class RecurrentModel(KerasModel):
 class ConvolutionalModel(KerasModel):
     """
     Keras model that supports advanced architectures like CNN.
+    It extends the KerasModel class to provide custom training and prediction methods.
+    It allows for flexible input reshaping based on the architecture specified in hyperparameters.
+
+    Attributes:
+        architecture (str): The architecture of the model (e.g., 'cnn', 'cnn2d').
+        name (str): The name of the model.
+        sources (fd.DataDescriptor): The input data descriptor.
+        target (fd.DataDescriptor): The target data descriptor.
+        model (keras.Model): The Keras model instance.
+        hyperparameters (dict): Hyperparameters for the model, including architecture, topology, and input
     """
 
     def __init__(self, name: str, sources: fd.DataDescriptor, target: fd.DataDescriptor, model: keras.Model=None, hyperparameters: dict=None):
@@ -198,6 +254,11 @@ class ConvolutionalModel(KerasModel):
         super().__init__(name, sources, target, model, hyperparameters)
 
     def reshape_input(self, X):
+        """
+        Reshape input based on architecture. CNN needs 3D input.
+        Args:
+            X (pd.DataFrame or np.ndarray): Input data to reshape.
+        """
 
         if isinstance(X, pd.DataFrame):
             X = X.values
@@ -214,6 +275,13 @@ class ConvolutionalModel(KerasModel):
             raise ValueError(f"Unsupported architecture for reshape: {self.architecture}")
 
     def fit(self, X_train, y_train):
+        """
+        Fit the model to the training data.
+
+        Args:
+            X_train (pd.DataFrame or np.ndarray): Training input data.
+            y_train (pd.Series or np.ndarray): Training target data.
+        """
 
         X_train = self.reshape_input(X_train)
         if isinstance(y_train, (pd.Series, pd.DataFrame)):
@@ -236,12 +304,25 @@ class ConvolutionalModel(KerasModel):
         )
 
     def predict(self, X):
+        """
+        Make predictions using the trained model.
+
+        Args:
+            X (pd.DataFrame or np.ndarray): Input data for predictions.
+
+        Returns:
+            np.ndarray: Model predictions.
+        """
 
         X = self.reshape_input(X)
         prediction = self.model.predict(X)
         return prediction if prediction.ndim > 1 else prediction.reshape(-1, 1)
 
     def initialize_model(self):
+        """
+        Initialize the Keras model based on the specified architecture and hyperparameters.
+        """
+
         layers = self.hyperparameters["topology"]["layers"]
         activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
@@ -273,11 +354,31 @@ class ConvolutionalModel(KerasModel):
 
 
 class TransformerModel(KerasModel):
+    """
+    Keras model that supports Transformer architecture.
+    It extends the KerasModel class to provide custom training and prediction methods.
+    It allows for flexible input reshaping based on the architecture specified in hyperparameters.
+
+    Attributes:
+        architecture (str): The architecture of the model (e.g., 'transformer').
+        name (str): The name of the model.
+        sources (fd.DataDescriptor): The input data descriptor.
+        target (fd.DataDescriptor): The target data descriptor.
+        model (keras.Model): The Keras model instance.
+        hyperparameters (dict): Hyperparameters for the model, including architecture, topology, and input
+    """
+
     def __init__(self, name, sources, target, model=None, hyperparameters=None):
         self.architecture = hyperparameters.get("model", {}).get("architecture", "transformer")
         super().__init__(name, sources, target, model, hyperparameters)
 
     def reshape_input(self, X):
+        """
+        Reshape input based on architecture. Transformer needs 3D input.
+        Args:
+            X (pd.DataFrame or np.ndarray): Input data to reshape.
+        """
+
         if isinstance(X, pd.DataFrame):
             X = X.values
         n_samples, n_features_total = X.shape
@@ -285,8 +386,59 @@ class TransformerModel(KerasModel):
         assert n_features_total % timesteps == 0, "Incompatible shape: total features no divisible by timesteps"
         n_features = n_features_total // timesteps
         return X.reshape((n_samples, timesteps, n_features))
+    
+    def fit(self, X_train, y_train):
+        """
+        Fit the model to the training data.
+
+        Args:
+            X_train (pd.DataFrame or np.ndarray): Training features.
+            y_train (pd.Series or np.ndarray): Training target.
+        """
+
+        X_train = self.reshape_input(X_train)
+        if isinstance(y_train, (pd.Series, pd.DataFrame)):
+            y_train = y_train.values
+
+        optimizer_params = self.optimizer_hyperparameters()
+
+        self.model.compile(
+            loss=optimizer_params["loss"],
+            optimizer=optimizer_params["optimizer"],
+            metrics=optimizer_params["metrics"]
+        )
+
+        print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
+        print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
+
+        self.model.fit(
+            X_train, y_train,
+            epochs=optimizer_params["epochs"],
+            batch_size=optimizer_params["batch_size"],
+            validation_split=optimizer_params["validation_split"],
+            callbacks=[optimizer_params["stop"]] if optimizer_params["stop"] else None
+        )
+        
+
+    def predict(self, X):
+        """
+        Predict the target variable using the trained model.
+
+        Args:
+            X (pd.DataFrame or np.ndarray): Input features for prediction.
+
+        Returns:
+            np.ndarray: Predicted values.
+        """
+        X = self.reshape_input(X)
+        prediction = self.model.predict(X)
+        return prediction if prediction.ndim > 1 else prediction.reshape(-1, 1)
 
     def initialize_model(self):
+        """
+        Initialize the Keras model based on the specified architecture.
+        """
+
         horizon = self.hyperparameters["input"]["horizon"]
         n_features = self.sources.size() // horizon
         num_heads = self.hyperparameters["model"].get("num_heads", 2)
@@ -317,12 +469,16 @@ class TransformerModel(KerasModel):
         return model
 
 
-from financial.lab.models import ModelFactory
-import financial.data as fd
+
 
 class KerasAdvancedModelFactory(ModelFactory):
     """
-    Crea modelos Keras avanzados (RNN, LSTM, etc.) integrados con el sistema de predicción.
+    Factory for creating advanced Keras models (RNN, LSTM, CNN, Transformer) integrated with the prediction system.
+    It follows the same structure as other model factories of the project.
+
+    Methods:
+        create_model_from_descriptors(model_id, hyperparameters, input_descriptor, output_descriptor):
+            Creates a KerasAdvancedModel instance from the provided descriptors and hyperparameters.
     """
 
     def create_model_from_descriptors(self, 
@@ -341,190 +497,14 @@ class KerasAdvancedModelFactory(ModelFactory):
             return KerasModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
 
 
-class KerasAdvancedModelFactory2(ModelFactory):
-    """
-    Crea modelos Keras avanzados (RNN, LSTM, CNN, Transformer) integrados con el sistema de predicción.
-    """
+# class KerasAdvancedModelFactory2(ModelFactory):
+#     """
+#     Crea modelos Keras avanzados (RNN, LSTM, CNN, Transformer) integrados con el sistema de predicción.
+#     """
 
-    def create_model_from_descriptors(self, 
-                                      model_id: str, 
-                                      hyperparameters: dict, 
-                                      input_descriptor: fd.DataDescriptor, 
-                                      output_descriptor: fd.DataDescriptor):
-        return KerasAdvancedModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
-
-
-
-'''
-import os
-import numpy as np
-import keras
-
-class KerasAdvancedModel:
-
-    def __init__(self, datastore, ticker, model_factory, name, start_year, end_year, hyperparameters, lookahead=20, horizon=90):
-        self.datastore = datastore
-        self.ticker = ticker
-        self.model_factory = model_factory
-        self.name = name
-        self.start_year = start_year
-        self.end_year = end_year
-        self.hyperparameters = hyperparameters
-        self.lookahead = lookahead
-        self.horizon = horizon
-        self.predictions = None
-
-    def get_training_data(self):
-        data = self.datastore.get_data(self.ticker, self.start_year, self.end_year)
-        y = data[self.ticker].iloc[self.horizon:]
-        samples = len(y)
-        features = len(data.columns)
-        X = np.zeros((samples, self.horizon, features))
-        for index in range(samples):
-            X[index] = data.iloc[index:index + self.horizon, :]
-        return X, y
-
-
-    def keras(timesteps: int, features: int, cells: int, type) -> keras.Model:
-        inputs = keras.layers.Input(shape=(timesteps, features))
-        if type == 'LSTM':
-            lstm_out = keras.layers.LSTM(cells)(inputs)
-        elif type == 'GRU':
-            lstm_out = keras.layers.GRU(cells)(inputs)
-        else:
-            lstm_out = keras.layers.SimpleRNN(cells)(inputs)
-
-        outputs = keras.layers.Dense(1, activation='linear')(lstm_out)
-        model = keras.Model(inputs=inputs, outputs=outputs)
-        return model
-    
-    def fit(self, X_train, y_train):
-        
-
-        self.model.compile(
-            optimizer=optimizer_params["optimizer"],
-            loss=optimizer_params["loss"],
-            metrics=optimizer_params["metrics"]
-        )
-
-        self.model.fit(
-            X_train, y_train,
-            epochs=optimizer_params["epochs"],
-            batch_size=optimizer_params["batch_size"],
-            validation_split=optimizer_params["validation_split"],
-            callbacks=[optimizer_params["stop"]] if optimizer_params["stop"] else None
-        )
-
-        
-
-
-
-
-
-
-
-
-
-
-        ________________
-        ________________
-
-import numpy as np
-import pandas as pd
-from tensorflow import keras
-from financial.model import KerasModel
-
-
-class KerasAdvancedModel(KerasModel):
-    """
-    Keras model that supports advanced architectures like RNN, LSTM, and CNN.
-    """
-
-    def __init__(self, name, sources, target, model=None, hyperparameters=None):
-        super().__init__(name, sources, target, model, hyperparameters)
-        self.architecture = hyperparameters.get("model", {}).get("architecture", "mlp")
-
-    def reshape_input(self, X):
-        """
-        Reshape input based on architecture. RNN and CNN need 3D input.
-        """
-        if self.architecture in ["rnn", "lstm", "cnn"]:
-            # X: DataFrame or 2D array (n_samples, n_features * timesteps)
-            if isinstance(X, pd.DataFrame):
-                X = X.values
-            n_samples, n_features_total = X.shape
-            # Horizon es el número de timesteps
-            timesteps = self.hyperparameters["input"]["horizon"]
-            n_features = n_features_total // timesteps
-            return X.reshape((n_samples, timesteps, n_features))
-        return X  # MLP expects 2D
-
-    def fit(self, X_train, y_train):
-        X_train = self.reshape_input(X_train)
-
-        if isinstance(y_train, (pd.Series, pd.DataFrame)):
-            y_train = y_train.values
-
-        optimizer_params = self.optimizer_hyperparameters()
-
-        self.model.compile(
-            optimizer=optimizer_params["optimizer"],
-            loss=optimizer_params["loss"],
-            metrics=optimizer_params["metrics"]
-        )
-
-        self.model.fit(
-            X_train, y_train,
-            epochs=optimizer_params["epochs"],
-            batch_size=optimizer_params["batch_size"],
-            validation_split=optimizer_params["validation_split"],
-            callbacks=[optimizer_params["stop"]] if optimizer_params["stop"] else None
-        )
-
-    def predict(self, X):
-        X = self.reshape_input(X)
-        prediction = self.model.predict(X)
-        return prediction if prediction.ndim > 1 else prediction.reshape(-1, 1)
-
-    def initialize_model(self):
-        """
-        Construye la red según la arquitectura indicada.
-        """
-        architecture = self.architecture
-        layers = self.hyperparameters["topology"]["layers"]
-        activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
-        activation_output = self.hyperparameters["topology"]["activation"]["output"]
-        input_dim = self.sources.size()
-        horizon = self.hyperparameters["input"]["horizon"]
-        n_features = 1  # por ahora solo un ticker
-
-        model = keras.models.Sequential()
-
-        if architecture == "mlp":
-            model.add(keras.layers.Input(shape=(input_dim,)))
-            for units in layers[:-1]:
-                model.add(keras.layers.Dense(units, activation=activation_hidden))
-            model.add(keras.layers.Dense(layers[-1], activation=activation_output))
-
-        elif architecture in ["rnn", "lstm"]:
-            model.add(keras.layers.Input(shape=(horizon, n_features)))
-            RNNLayer = keras.layers.LSTM if architecture == "lstm" else keras.layers.SimpleRNN
-            for units in layers[:-1]:
-                model.add(RNNLayer(units, return_sequences=True))
-            model.add(RNNLayer(layers[-1]))
-            model.add(keras.layers.Dense(1, activation=activation_output))
-
-        elif architecture == "cnn":
-            model.add(keras.layers.Input(shape=(horizon, n_features)))
-            for units in layers[:-1]:
-                model.add(keras.layers.Conv1D(filters=units, kernel_size=3, activation=activation_hidden, padding='same'))
-                model.add(keras.layers.MaxPooling1D(pool_size=2))
-            model.add(keras.layers.Flatten())
-            model.add(keras.layers.Dense(layers[-1], activation=activation_output))
-
-        else:
-            raise ValueError(f"Unsupported architecture: {architecture}")
-
-        return model
-
-'''
+#     def create_model_from_descriptors(self, 
+#                                       model_id: str, 
+#                                       hyperparameters: dict, 
+#                                       input_descriptor: fd.DataDescriptor, 
+#                                       output_descriptor: fd.DataDescriptor):
+#         return KerasAdvancedModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
