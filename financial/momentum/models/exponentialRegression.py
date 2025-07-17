@@ -19,46 +19,57 @@ import pandas as pd
 import sklearn.linear_model
 
 class ExponentialScikitLearnModel(fm.ScikitLearnModel):
-    '''
+    """
     Exponential Regression Model based on Scikit-Learn
     
         Exponential Regression : Y = A*exp(Bx)
         Lienar Regression:       Y = A + Bx
         Solution:                ln(Y) = ln(A) + Bx
-    '''
+
+    Methods:
+        fit(X_train, y_train): Fit the model to the training data
+        predict(X): Predict the target variable using the fitted model
+    """
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
-        '''
-        Ajust a linear regression model to the log of the target variable
-        '''
+        """
+        Fit a linear regression model to the log of the target variable
+        Args:
+            X_train (pd.DataFrame): Training data features
+            y_train (pd.Series): Training data target variable
+        """
         if "normalization" in  self.hyperparameters["output"]:
-            y_train = y_train + abs(y_train.min()) + 1e-6  # Normalization to avoid log(0) and negative values ????? Min-max solution instead of z-score
+            y_train = y_train + abs(y_train.min()) + 1  # Normalization to avoid 0 or negative values [We won't normalize using this model]
 
-        # Error al tratar con valores negativos e iguales a 0
+        # Convert y_train to log scale, if is a non-negative value it will raise an error as expected
+        # This model is the first approach of the project, the values given to the model won't be negative
+        # as we do not normalize the data and financial times series values are always positive
         y_train_log = np.log(y_train)
         self.model.fit(X_train.values, y_train_log.values)
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
-        '''
+        """
         Predict the target variable using the exponential regression model
-        '''
+        Args:
+            X (pd.DataFrame): Input features for prediction
+        Returns:
+            np.ndarray: Predicted values in the original scale (exponential)
+        """
         if isinstance(X, list):
             X = pd.DataFrame(X)
         
         y_pred_log = self.model.predict(X.values)  
         return np.exp(y_pred_log)
 
-#    def score(self, X_test: pd.DataFrame, y_test: pd.Series):
-        '''
-        Compute the R2 score of the model
-        '''
-#        y_test_log = np.log(y_test)
-#        return self.model.score(X_test.values, y_test_log.values)
-
 class ExponentialRegressionModelFactory(ModelFactory):
-    '''
-    Exponential regression model factory
-    '''
+    """
+    Factory class to create ExponentialScikitLearnModel instances.
+    It follows the same structure as other model factories of the project.
+
+    Methods:
+        create_model_from_descriptors(model_id, hyperparameters, input_descriptor, output_descriptor):
+            Creates an ExponentialScikitLearnModel instance from the provided descriptors and hyperparameters.
+    """
 
     def create_model_from_descriptors(self, 
                                       model_id: str, 
@@ -70,26 +81,10 @@ class ExponentialRegressionModelFactory(ModelFactory):
         
         return ExponentialScikitLearnModel(model_id, input_descriptor, output_descriptor, model, hyperparameters)
 
-'''
-    def output_descriptor(self, hyperparameters: dict, ds: fd.DataStore = None) -> fd.DataDescriptor:
-        outputs = fd.Set('outputs')
-        for output in hyperparameters["output"]["target"]:
-            variable = fd.Variable(output) 
-            lookahead = hyperparameters["output"]["lookahead"]
-            target = fd.LookAhead(variable, lookahead)
-            outputs.append( target )     
 
-        if "normalization" in hyperparameters["output"]:
-            normalization = hyperparameters["output"]["normalization"]
-            outputs = self.normalize(normalization, ds, outputs)    
-
-        return outputs
-'''
-
-
-'''
-Test
-'''
+"""
+Test ExponentialRegressionModelFactory
+"""
 
 if __name__ == "__main__":
     print("Ejecutando prueba de ExponentialRegressionModelFactory...")

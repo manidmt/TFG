@@ -12,17 +12,37 @@ import numpy as np
 import financial.data as fd
 from financial.lab.models import ModelFactory
 
+
+
 class RandomForestModel(fm.ScikitLearnModel):
-    '''
-    Random Forest Model adaptado al framework financiero.
-    '''
+    """
+    This RandomForestModel class wraps a Scikit-Learn RandomForestRegressor model
+    to provide a consistent interface for training and prediction.
+
+    Methods:
+        fit(X_train, y_train): Fit the model to the training data.
+        predict(X): Make predictions using the trained model.
+    """
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
+        """
+        Fit the Random Forest model to the training data.
+        Args:
+            X_train (pd.DataFrame): Training features.
+            y_train (pd.Series): Training target.
+        """
         self.model.fit(X_train, y_train.values.ravel())
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
+        """
+        Make predictions using the trained Random Forest model.
+        Args:
+            X (pd.DataFrame): Input features for prediction.
+        Returns:
+            np.ndarray: Predicted values.
+        """
         prediction = self.model.predict(X)
 
-        # Asegurarse de que la predicción sea 2D (n_samples, 1), realmente es extra teniendo lo de ravel()
+        # Ensure the prediction is 2D (n_samples, 1), really it's extra having ravel()
         if prediction.ndim == 1:
             prediction = prediction.reshape(-1, 1)
 
@@ -30,7 +50,12 @@ class RandomForestModel(fm.ScikitLearnModel):
 
 class RandomForestModelFactory(ModelFactory):
     """
-    Random Forest regression model factory.
+    Factory class to create RandomForestModel instances.
+    It follows the same structure as other model factories of the project.
+
+    Methods:
+        create_model_from_descriptors(model_id, hyperparameters, input_descriptor, output_descriptor):
+            Creates a RandomForestModel instance from the provided descriptors and hyperparameters.
     """
 
     def create_model_from_descriptors(self, 
@@ -40,9 +65,16 @@ class RandomForestModelFactory(ModelFactory):
                                       output_descriptor: fd.DataDescriptor) -> fm.Model:
         """
         Creates a Scikit-Learn wrapped RandomForestRegressor model.
+        Args:
+            model_id (str): Unique identifier for the model.
+            hyperparameters (dict): Hyperparameters for the model.
+            input_descriptor (fd.DataDescriptor): Descriptor for input data.
+            output_descriptor (fd.DataDescriptor): Descriptor for output data.
+        Returns:
+            RandomForestModel: An instance of RandomForestModel.
         """
 
-        # Hiperparámetros por defecto
+        #  Default parameters for RandomForestModel
         default_params = {
             'n_estimators': 100,
             'max_depth': None,
@@ -52,12 +84,12 @@ class RandomForestModelFactory(ModelFactory):
             'n_jobs': -1
         }
 
-        # Mezclar con los que se pasen por hyperparameters
+        # Mix with the ones passed by hyperparameters
         params = default_params.copy()
         params.update(hyperparameters.get("model", {}))
 
-        # Crear modelo scikit-learn
+        # Create scikit-learn model
         model = RandomForestRegressor(**params)
 
-        # Devolver modelo envuelto
+        # Return wrapped model
         return RandomForestModel(model_id, input_descriptor, output_descriptor, model, hyperparameters)

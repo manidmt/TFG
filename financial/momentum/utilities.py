@@ -59,24 +59,26 @@ from typing import Dict, Any
 from sklearn.metrics import r2_score
 from financial.lab.experiment import Experiment
 
-def metrics(experiment, predictions, target):
-    metrics_multiple = Experiment(experiment.name, predictions, target)
-    r2 = r2_score(target, predictions)
+def metrics(experiment, predictions, target, model_path):
     
     all_metrics_to_save: Dict[str, Any] = {}
     
-    print("GLOBAL:")
-    print(f"n={metrics_multiple.samples()} MSE={metrics_multiple.MSE():.4f} RMSE={metrics_multiple.RMSE():.4f} MAE={metrics_multiple.MAE():.4f} MAPE={metrics_multiple.MAPE():.4f} R² = {r2:.4f}")
-    
-    global_metrics = {
-        "n": metrics_multiple.samples(),
-        "MSE": metrics_multiple.MSE(),
-        "RMSE": metrics_multiple.RMSE(),
-        "MAE": metrics_multiple.MAE(),
-        "MAPE": metrics_multiple.MAPE(),
-        "R2": r2
-    }
-    all_metrics_to_save["global"] = global_metrics
+    if target.size == predictions.size:
+        metrics_multiple = Experiment(experiment.name, predictions, target)
+        r2 = r2_score(target, predictions)
+        
+        print("GLOBAL:")
+        print(f"n={metrics_multiple.samples()} MSE={metrics_multiple.MSE():.4f} RMSE={metrics_multiple.RMSE():.4f} MAE={metrics_multiple.MAE():.4f} MAPE={metrics_multiple.MAPE():.4f} R² = {r2:.4f}")
+        
+        global_metrics = {
+            "n": metrics_multiple.samples(),
+            "MSE": metrics_multiple.MSE(),
+            "RMSE": metrics_multiple.RMSE(),
+            "MAE": metrics_multiple.MAE(),
+            "MAPE": metrics_multiple.MAPE(),
+            "R2": r2
+        }
+        all_metrics_to_save["global"] = global_metrics
     
     
     if experiment.train.samples() > 0:
