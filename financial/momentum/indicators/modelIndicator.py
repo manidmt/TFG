@@ -16,5 +16,5 @@ class ModelIndicator(TechnicalIndicator):
     
     def get_data_descriptor(self, input_descriptor):
         ticker = str(input_descriptor)
-        ticker_model = self.model + '_' + ticker
+        ticker_model = f"{self.model}_{ticker}_2025_single"
         return Variable(ticker_model)

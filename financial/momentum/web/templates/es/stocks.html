@@ -1,0 +1,14 @@
+{% extends "es/layout.html" %}
+
+{% block content %}
+  <h2>Acciones con modelos disponibles</h2>
+  {% if tickers %}
+    <ul>
+      {% for ticker in tickers %}
+        <li><a href="/{{ lang }}/acciones/{{ ticker }}">{{ ticker }}</a></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No se han encontrado modelos aún.</p>
+  {% endif %}
+{% endblock %}

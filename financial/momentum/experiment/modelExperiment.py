@@ -73,6 +73,7 @@ class GlobalModelExperiment(ModelExperiment):
         self.splits = [f"{year}-01-01" for year in range(start_year_split, int(end_year[:4]))]
         self.features = None
         self.target = None
+        self.final_model = None
         # Hiperparametros como parametro del constructor
 
         #print(self.hyperparameters)
@@ -110,6 +111,7 @@ class GlobalModelExperiment(ModelExperiment):
             
         final_model = labevaluation.ModelTraining(self.name, self.hyperparameters, self.features, self.target, df, self.model_factory)
         final_model.run()
+        self.final_model = final_model.model
 
         #self.predictions = self.reconstruct_relative_predictions_from_zscore(final_model.model.get_data(self.datastore, self.start_year, self.end_year))
         self.predictions = final_model.model.get_data(self.datastore, self.start_year, self.end_year)

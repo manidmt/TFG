@@ -1,0 +1,30 @@
+{% extends "es/layout.html" %}
+
+{% block content %}
+  <h2>Modelos disponibles para {{ ticker }}</h2>
+
+  {% if models %}
+    <table>
+      <thead>
+        <tr>
+          <th>Arquitectura</th>
+          <th>Año</th>
+          <th>Tipo</th>
+          <th>Extras</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for model in models %}
+        <tr>
+          <td><a href="/{{ lang }}/acciones/{{ ticker }}/{{ model.base_name }}">{{ model.architecture }}</a></td>
+          <td>{{ model.year }}</td>
+          <td>{{ model.type }}</td>
+          <td>{{ model.extra }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No se encontraron modelos para {{ ticker }}</p>
+  {% endif %}
+{% endblock %}
