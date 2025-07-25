@@ -10,116 +10,7 @@ from financial.model import KerasModel
 import financial.data as fd
 from financial.lab.models import ModelFactory
 import financial.data as fd
-
-
-
-# class KerasAdvancedModel(KerasModel):
-#     """
-#     Keras model that supports advanced architectures like RNN, LSTM, CNN, Transformer.
-#     It extends the KerasModel class to provide custom training and prediction methods.
-#     It allows for flexible input reshaping based on the architecture specified in hyperparameters.
-
-#     Attributes:
-#         architecture (str): The architecture of the model (e.g., 'mlp', 'rnn', 'lstm', 'cnn', 'transformer').
-#         name (str): The name of the model.
-#         sources (fd.DataDescriptor): The input data descriptor.
-#         target (fd.DataDescriptor): The target data descriptor.
-#         model (keras.Model): The Keras model instance.
-#         hyperparameters (dict): Hyperparameters for the model, including architecture, topology, and input/output configurations.
-#     """
-#     def __init__(self, name: str, sources: fd.DataDescriptor, target: fd.DataDescriptor, model: keras.Model=None, hyperparameters: dict=None):
-#         # print(f"Hyperparameters: {hyperparameters}")
-#         print(f"{hyperparameters.get('model', {}).get('architecture', 'mlp')} architecture selected for model {name}")
-#         self.architecture = hyperparameters.get('architecture', 'mlp')
-#         super().__init__(name, sources, target, model, hyperparameters)
-        
-
-
-#     def reshape_input(self, X):
-#         """
-#         Reshape input based on architecture. RNN and CNN need 3D input.
-#         """
-#         if self.architecture in ["rnn", "lstm", "cnn"]:
-#             if isinstance(X, pd.DataFrame):
-#                 X = X.values
-#             n_samples, n_features_total = X.shape
-#             timesteps = self.hyperparameters["input"]["horizon"]
-#             assert n_features_total % timesteps == 0, "Incompatible shape: total features no divisible by timesteps"
-#             n_features = n_features_total // timesteps
-#             return X.reshape((n_samples, timesteps, n_features))
-#         return X  # MLP no requiere reshape
-
-#     def fit(self, X_train, y_train):
-#         print(f"Fitting model {self.name} with architecture {self.architecture}")
-#         if self.architecture == "mlp":
-#             return super().fit(X_train, y_train)
-
-#         X_train = self.reshape_input(X_train)
-#         if isinstance(y_train, (pd.Series, pd.DataFrame)):
-#             y_train = y_train.values
-
-#         optimizer_params = self.optimizer_hyperparameters()
-#         print(f"Optimizer parameters: {optimizer_params}")
-#         self.model.compile(
-#             loss=optimizer_params["loss"],
-#             optimizer=optimizer_params["optimizer"],
-#             metrics=optimizer_params["metrics"]
-#         )
-
-#         print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
-#         print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
-
-
-#         self.model.fit(
-#             X_train, y_train,
-#             epochs=optimizer_params["epochs"],
-#             batch_size=optimizer_params["batch_size"],
-#             validation_split=optimizer_params["validation_split"],
-#             callbacks=[optimizer_params["stop"]] if optimizer_params["stop"] else None
-#         )
-
-#     def predict(self, X):
-#         if self.architecture == "mlp":
-#             return super().predict(X)
-
-#         X = self.reshape_input(X)
-#         prediction = self.model.predict(X)
-#         return prediction if prediction.ndim > 1 else prediction.reshape(-1, 1)
-    
-#     def initialize_model(self):
-        
-#         if self.architecture == "mlp":
-#             return super().initialize_model()
-
-#         layers = self.hyperparameters["topology"]["layers"]
-#         activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
-#         activation_output = self.hyperparameters["topology"]["activation"]["output"]
-#         horizon = self.hyperparameters["input"]["horizon"]
-#         n_features = self.sources.size()  # Para un ticker sería 1
-
-#         model = keras.models.Sequential()
-
-#         if self.architecture in ["rnn", "lstm"]:
-#             model.add(keras.layers.Input(shape=(horizon, n_features)))
-#             RNNLayer = keras.layers.LSTM if self.architecture == "lstm" else keras.layers.SimpleRNN
-#             for units in layers[:-1]:
-#                 model.add(RNNLayer(units, return_sequences=True)) # podría ponerse el hidden también
-#             model.add(RNNLayer(layers[-1]))
-#             model.add(keras.layers.Dense(1, activation=activation_output))
-
-#         elif self.architecture == "cnn":
-#             model.add(keras.layers.Input(shape=(horizon, n_features)))
-#             for units in layers[:-1]:
-#                 model.add(keras.layers.Conv1D(filters=units, kernel_size=3, activation=activation_hidden, padding='same'))
-#                 model.add(keras.layers.MaxPooling1D(pool_size=2))
-#             model.add(keras.layers.Flatten())
-#             model.add(keras.layers.Dense(layers[-1], activation=activation_output))
-
-#         else:
-#             raise ValueError(f"Unsupported architecture: {self.architecture}")
-
-#         return model
-
+from keras.callbacks import LambdaCallback
     
 class RecurrentModel(KerasModel):
     """
@@ -180,8 +71,19 @@ class RecurrentModel(KerasModel):
             metrics=optimizer_params["metrics"]
         )
 
+        print("▶️ Entrenando modelo...")
+
         print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
         print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
+
+        print("X_train shape:", X_train.shape, "mean:", X_train.mean(), "std:", X_train.std())
+        print("y_train.mean():", y_train.mean())
+        print("y_train.std():", y_train.std())
+        print("y_train.min():", y_train.min())
+        print("y_train.max():", y_train.max())
+
+
+        debug_callback = LambdaCallback(on_epoch_end=lambda epoch, logs: print(f"Epoch {epoch+1}: loss={logs['loss']}, val_loss={logs.get('val_loss')}"))
 
         self.model.fit(
             X_train, y_train,
