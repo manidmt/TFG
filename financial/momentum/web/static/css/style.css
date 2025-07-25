@@ -1,0 +1,121 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f6fa;
+    color: #2f3640;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #273c75;
+    padding: 15px;
+    color: white;
+    text-align: center;
+}
+
+nav {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+nav a {
+    color: #487eb0;
+    margin: 0 12px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+nav a:hover {
+    color: #e1b12c;
+}
+
+h1, h2, h3 {
+    text-align: center;
+}
+
+table {
+    width: 90%;
+    margin: 0 auto 2rem auto;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+th, td {
+    border: 1px solid #dcdde1;
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background-color: #dcdde1;
+    color: #2f3640;
+}
+
+ul {
+    max-width: 800px;
+    margin: 0 auto;
+    padding-left: 1.5rem;
+}
+
+li {
+    margin-bottom: 0.5rem;
+    list-style-type: disc;
+    color: #2f3640;
+    padding-left: 1rem;
+}
+
+li a {
+    font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #487eb0;
+    text-decoration: none;
+}
+
+li a:hover {
+    color: #e1b12c;
+}
+
+
+/* Ticker section */
+
+/* Grid de tickers */
+
+.ticker-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.ticker-card {
+    background-color: #ffffff;
+    border: 1px solid #dcdde1;
+    border-radius: 8px;
+    padding: 1rem 2rem;
+    min-width: 100px;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.ticker-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ticker-card a {
+    text-decoration: none;
+    color: #2980b9;
+    font-size: 1.1rem;
+}
+
+.ticker-card a:hover {
+    color: #e67e22;
+}
+
+
+
+
