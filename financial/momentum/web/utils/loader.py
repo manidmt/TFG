@@ -125,3 +125,73 @@ def load_model_details(model_id, directory=None):
         "metadata": metadata
     }
 
+import pandas as pd
+import plotly.graph_objs as go
+import plotly.io as pio
+from financial.io.cache import NoUpdateStrategy
+from financial.io.file.cache import FileCache
+import financial.data as fd
+
+def generate_plot(ticker, preds_df, lang="es"):
+    # 1. Carga serie original
+    ds = fd.CachedDataStore(
+        path=os.environ["DATA"],
+        cache=FileCache(cache_path=os.environ["CACHE"] + "/", update_strategy=NoUpdateStrategy())
+    )
+    data = ds.get_data(ticker)
+
+    # 2. Recorta la serie real al rango del CSV
+    real = data.loc[preds_df["Date"]].copy()
+    real = real.to_frame(name="Real")
+
+    # 3. Une predicción y valor real
+    combined = pd.merge(preds_df, real[["Real"]], left_on="Date", right_index=True)
+
+    # 4. Gráfico interactivo
+
+    if lang == "en":
+        label_6m = "6m"
+        label_1y = "1y"
+        label_3y = "3y"
+        label_all = "All"
+        title = "Real vs Prediction"
+        xaxis_title = "Date"
+        yaxis_title = "Value"
+    else:
+        label_6m = "6m"
+        label_1y = "1a"
+        label_3y = "3a"
+        label_all = "Todo"
+        title = "Gráfico Real vs Predicción"
+        xaxis_title = "Fecha"
+        yaxis_title = "Valor"
+
+    # Gráfico
+    fig = go.Figure()
+    legend_real = "Real" if lang == "en" else "Real"
+    legend_pred = "Prediction" if lang == "en" else "Predicción"
+
+    fig.add_trace(go.Scatter(x=combined["Date"], y=combined["Real"], name=legend_real, line=dict(color="blue")))
+    fig.add_trace(go.Scatter(x=combined["Date"], y=combined.iloc[:, 1], name=legend_pred, line=dict(color="red")))
+
+    fig.update_layout(
+        title=title,
+        height=600,
+        xaxis_title=xaxis_title,
+        yaxis_title=yaxis_title,
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=6, label=label_6m, step="month", stepmode="backward"),
+                    dict(count=1, label=label_1y, step="year", stepmode="backward"),
+                    dict(count=3, label=label_3y, step="year", stepmode="backward"),
+                    dict(step="all", label=label_all)
+                ])
+            ),
+            rangeslider=dict(visible=True),
+            type="date"
+        )
+    )
+
+    return pio.to_html(fig, full_html=False)
+

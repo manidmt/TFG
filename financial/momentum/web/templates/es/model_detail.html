@@ -3,12 +3,19 @@
 {% block content %}
   <h2>Detalles del modelo {{ model_id }}</h2>
 
-  <h3>Métricas</h3>
-  <ul>
-    {% for key, value in details.metrics.items() %}
-      <li><strong>{{ key }}:</strong> {{ value }}</li>
+  <div class="card">
+    <h3>Métricas</h3>
+    {% for tipo, valores in details.metrics.items() %}
+      <div class="metric-block">
+        <strong>{{ tipo|capitalize }}:</strong>
+        <ul>
+          {% for k, v in valores.items() %}
+            <li><strong>{{ k }}</strong>: {{ '%.4f'|format(v) }}</li>
+          {% endfor %}
+        </ul>
+      </div>
     {% endfor %}
-  </ul>
+  </div>
 
   <h3>Hiperparámetros</h3>
   <ul>
@@ -23,29 +30,10 @@
       <li><strong>{{ key }}:</strong> {{ value }}</li>
     {% endfor %}
   </ul>
-
-  <h3>Predicciones</h3>
-{% if details.predictions|length > 0 %}
-  <table>
-    <thead>
-      <tr>
-        {% for col in details.predictions[0].keys() %}
-          <th>{{ col }}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in details.predictions %}
-        <tr>
-          {% for val in row.values() %}
-            <td>{{ val }}</td>
-          {% endfor %}
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% else %}
-  <p>No predictions available for this model.</p>
-{% endif %}
-
+  <h3 class="section-header">Gráfico Real vs Predicción</h3>
+    {% if plot_html %}
+      {{ plot_html | safe }}
+    {% else %}
+      <p>No hay datos suficientes para generar la gráfica.</p>
+    {% endif %}
 {% endblock %}
