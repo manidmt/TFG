@@ -6,6 +6,7 @@ Class for advanced Keras models with custom layers and training methods.
 
 import pandas as pd
 import keras
+import numpy as np
 from financial.model import KerasModel
 import financial.data as fd
 from financial.lab.models import ModelFactory
@@ -121,7 +122,7 @@ class RecurrentModel(KerasModel):
         # activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
         horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size() // horizon  # Number of tickers
+        n_features = self.sources.size()  # Number of tickers
         #print(self.sources, n_features)
 
         model = keras.models.Sequential()
@@ -185,6 +186,9 @@ class ConvolutionalModel(KerasModel):
             y_train (pd.Series or np.ndarray): Training target data.
         """
 
+        if np.isnan(X_train).any() or np.isnan(y_train).any():
+            raise ValueError("X_train or y_train contains NaN values.")
+
         X_train = self.reshape_input(X_train)
         if isinstance(y_train, (pd.Series, pd.DataFrame)):
             y_train = y_train.values
@@ -229,25 +233,25 @@ class ConvolutionalModel(KerasModel):
         activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
         horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size() // horizon
+        n_features = self.sources.size()
 
         model = keras.models.Sequential()
 
         if self.architecture == "cnn":
             model.add(keras.layers.Input(shape=(horizon, n_features)))
             for units in layers[:-1]:
-                model.add(keras.layers.Conv1D(filters=units, kernel_size=3, activation=activation_hidden, padding='same'))
+                model.add(keras.layers.Conv1D(filters=units, kernel_size=horizon, activation=activation_hidden, padding='same'))
                 model.add(keras.layers.MaxPooling1D(pool_size=2))
             model.add(keras.layers.Flatten())
-            model.add(keras.layers.Dense(layers[-1], activation=activation_output))
+            model.add(keras.layers.Dense(1, activation=activation_output))
 
         elif self.architecture == "cnn2d":
             model.add(keras.layers.Input(shape=(horizon, n_features, 1)))
             for units in layers[:-1]:
-                model.add(keras.layers.Conv2D(filters=units, kernel_size=(3, 3), activation=activation_hidden, padding='same'))
+                model.add(keras.layers.Conv2D(filters=units, kernel_size=(horizon, n_features), activation=activation_hidden, padding='same'))
                 model.add(keras.layers.MaxPooling2D(pool_size=(2, 1)))
             model.add(keras.layers.Flatten())
-            model.add(keras.layers.Dense(layers[-1], activation=activation_output))
+            model.add(keras.layers.Dense(1, activation=activation_output))
 
         else:
             raise ValueError(f"Unsupported CNN architecture: {self.architecture}")
@@ -342,7 +346,7 @@ class TransformerModel(KerasModel):
         """
 
         horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size() // horizon
+        n_features = self.sources.size()
         num_heads = self.hyperparameters["model"].get("num_heads", 2)
         ff_dim = self.hyperparameters["model"].get("ff_dim", 64)
         dropout_rate = self.hyperparameters["model"].get("dropout", 0.1)
