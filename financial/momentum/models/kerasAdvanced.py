@@ -59,7 +59,9 @@ class RecurrentModel(KerasModel):
             X_train (pd.DataFrame or np.ndarray): Training features.
             y_train (pd.Series or np.ndarray): Training target.
         """
-
+        if np.isnan(X_train).any() or np.isnan(y_train).any():
+            raise ValueError("X_train or y_train contains NaN values.")
+        
         X_train = self.reshape_input(X_train)
         if isinstance(y_train, (pd.Series, pd.DataFrame)):
             y_train = y_train.values
@@ -72,16 +74,16 @@ class RecurrentModel(KerasModel):
             metrics=optimizer_params["metrics"]
         )
 
-        print("▶️ Entrenando modelo...")
+        # print("▶️ Entrenando modelo...")
 
-        print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
-        print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
+        # print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
+        # print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
 
-        print("X_train shape:", X_train.shape, "mean:", X_train.mean(), "std:", X_train.std())
-        print("y_train.mean():", y_train.mean())
-        print("y_train.std():", y_train.std())
-        print("y_train.min():", y_train.min())
-        print("y_train.max():", y_train.max())
+        # print("X_train shape:", X_train.shape, "mean:", X_train.mean(), "std:", X_train.std())
+        # print("y_train.mean():", y_train.mean())
+        # print("y_train.std():", y_train.std())
+        # print("y_train.min():", y_train.min())
+        # print("y_train.max():", y_train.max())
 
 
         debug_callback = LambdaCallback(on_epoch_end=lambda epoch, logs: print(f"Epoch {epoch+1}: loss={logs['loss']}, val_loss={logs.get('val_loss')}"))
@@ -239,7 +241,7 @@ class ConvolutionalModel(KerasModel):
 
         if self.architecture == "cnn":
             model.add(keras.layers.Input(shape=(horizon, n_features)))
-            for units in layers[:-1]:
+            for units in layers:
                 model.add(keras.layers.Conv1D(filters=units, kernel_size=horizon, activation=activation_hidden, padding='same'))
                 model.add(keras.layers.MaxPooling1D(pool_size=2))
             model.add(keras.layers.Flatten())
@@ -247,7 +249,7 @@ class ConvolutionalModel(KerasModel):
 
         elif self.architecture == "cnn2d":
             model.add(keras.layers.Input(shape=(horizon, n_features, 1)))
-            for units in layers[:-1]:
+            for units in layers:
                 model.add(keras.layers.Conv2D(filters=units, kernel_size=(horizon, n_features), activation=activation_hidden, padding='same'))
                 model.add(keras.layers.MaxPooling2D(pool_size=(2, 1)))
             model.add(keras.layers.Flatten())
@@ -302,6 +304,9 @@ class TransformerModel(KerasModel):
             y_train (pd.Series or np.ndarray): Training target.
         """
 
+        if np.isnan(X_train).any() or np.isnan(y_train).any():
+            raise ValueError("X_train or y_train contains NaN values.")
+
         X_train = self.reshape_input(X_train)
         if isinstance(y_train, (pd.Series, pd.DataFrame)):
             y_train = y_train.values
@@ -314,8 +319,8 @@ class TransformerModel(KerasModel):
             metrics=optimizer_params["metrics"]
         )
 
-        print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
-        print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
+        # print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
+        # print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
 
         self.model.fit(
             X_train, y_train,

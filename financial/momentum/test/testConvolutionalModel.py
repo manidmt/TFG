@@ -42,7 +42,7 @@ class TestConvolutionalModel(unittest.TestCase):
                 "stop": None
             }
         }
-        self.model = ConvolutionalModel("CNNModel", self.sources, self.target, hyperparameters=self.hyperparameters)
+        self.model = ConvolutionalModel("testCNN", self.sources, self.target, hyperparameters=self.hyperparameters)
 
     def test_reshape_input_cnn(self):
         X = np.random.rand(50, len(self.variables) * self.horizon)
@@ -67,6 +67,45 @@ class TestConvolutionalModel(unittest.TestCase):
         self.model.fit(X, y)
         predictions = self.model.predict(X)
         self.assertEqual(predictions.shape, (100, 1))
+
+    def test_number_of_params(self):
+        horizon = 90
+        n_features = 2
+        filters = 64
+
+        hyperparams = {
+            "model": {"architecture": "cnn"},
+            "input": {"horizon": horizon},
+            "topology": {
+                "layers": [filters],
+                "activation": {"hidden": "relu", "output": "linear"}
+            },
+            "optimization": {
+                "optimizer": "adam",
+                "loss": "mse",
+                "metrics": ["mae"],
+                "epochs": 1,
+                "batch_size": 8,
+                "validation_split": 0.1
+            }
+        }
+
+        sources = fd.Set("input")
+        sources.append(fd.Variable("X1"))
+        sources.append(fd.Variable("X2"))
+        target = fd.Variable("Y")
+
+        model = ConvolutionalModel("cnn_test", sources, target, hyperparameters=hyperparams)
+
+        model.model.build(input_shape=(None, horizon, n_features))
+
+        conv_layers = [layer for layer in model.model.layers if isinstance(layer, keras.layers.Conv1D)]
+        self.assertGreater(len(conv_layers), 0, "No Conv1D layers found in the model.")
+
+        conv_layer = conv_layers[0]
+        expected_params = (horizon * n_features + 1) * filters
+        self.assertEqual(conv_layer.count_params(), expected_params,
+                        f"Expected {expected_params} params, got {conv_layer.count_params()}")
 
     def test_fit_with_nan_values(self):
         X = np.random.rand(50, len(self.variables) * self.horizon)
@@ -109,16 +148,13 @@ class TestConvolutionalModel(unittest.TestCase):
         keras_model = model.model
         conv_layers = [layer for layer in keras_model.layers if isinstance(layer, keras.layers.Conv1D)]
 
-        # Solo se crean capas Conv1D para layers[:-1]
-        expected_conv_layers = len(hyperparams["topology"]["layers"]) - 1
+        expected_conv_layers = len(hyperparams["topology"]["layers"])
         self.assertEqual(len(conv_layers), expected_conv_layers)
 
-        # Verifica los filtros de las capas Conv1D
         for i, layer in enumerate(conv_layers):
             expected_filters = hyperparams["topology"]["layers"][i]
             self.assertEqual(layer.filters, expected_filters)
 
-        # Verifica tamaño del kernel
         for layer in conv_layers:
             self.assertEqual(layer.kernel_size[0], self.horizon)
 
@@ -144,14 +180,13 @@ class TestConvolutionalModel(unittest.TestCase):
         keras_model = model.model
         conv2d_layers = [layer for layer in keras_model.layers if isinstance(layer, keras.layers.Conv2D)]
 
-        expected_conv_layers = len(hyperparams["topology"]["layers"]) - 1
+        expected_conv_layers = len(hyperparams["topology"]["layers"])
         self.assertEqual(len(conv2d_layers), expected_conv_layers)
 
         for i, layer in enumerate(conv2d_layers):
             expected_filters = hyperparams["topology"]["layers"][i]
             self.assertEqual(layer.filters, expected_filters)
 
-            # Verifica el kernel_size esperado para cnn2d: (horizon, n_features)
             expected_kernel_size = (self.horizon, self.sources.size())
             self.assertEqual(layer.kernel_size, expected_kernel_size)
 
