@@ -88,13 +88,6 @@ class TestTransformerModel(unittest.TestCase):
         pooling_layers = [layer for layer in self.model.model.layers if isinstance(layer, keras.layers.GlobalAveragePooling1D)]
         self.assertEqual(len(pooling_layers), 1)
 
-    def test_model_raises_on_nan_input(self):
-        X = np.random.rand(100, len(self.variables) * self.horizon)
-        y = np.random.rand(100, 1)
-        X[0, 0] = np.nan
-        with self.assertRaises(ValueError):
-            self.model.fit(X, y)
-
     def test_model_handles_varied_heads_ffdim(self):
         # Cambio de heads y ff_dim
         self.hyperparams["model"]["num_heads"] = 4

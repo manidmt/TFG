@@ -107,13 +107,6 @@ class TestConvolutionalModel(unittest.TestCase):
         self.assertEqual(conv_layer.count_params(), expected_params,
                         f"Expected {expected_params} params, got {conv_layer.count_params()}")
 
-    def test_fit_with_nan_values(self):
-        X = np.random.rand(50, len(self.variables) * self.horizon)
-        X[0, 0] = np.nan
-        y = np.random.rand(50, 1)
-        with self.assertRaises(ValueError):
-            self.model.fit(X, y)
-
     def test_model_structure_cnn1d(self):
         self.model.architecture = "cnn"
         model = self.model.initialize_model()

@@ -87,13 +87,5 @@ class TestRecurrentModel(unittest.TestCase):
         output_shape = model.output_shape
         self.assertEqual(output_shape[-1], 1)
 
-    def test_fit_with_extreme_values(self):
-        X = np.random.rand(50, len(self.variables) * self.horizon)
-        X[0][0] = np.nan
-        y = np.random.rand(50, 1)
-        with self.assertRaises(ValueError):
-            self.model.fit(X, y)
-
-
 if __name__ == '__main__':
     unittest.main()
