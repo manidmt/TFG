@@ -182,6 +182,7 @@ class ModelExperimentFactory:
             ticker_list = ticker
 
         if len(ticker_list) > 1:
+            print(f"Multiple tickers detected: {ticker_list}. Using multi-ticker features.")
             input_features = "financial.momentum.experiment.modelExperiment.multi_ticker_features"
         else:
             input_features = "financial.momentum.experiment.modelExperiment.baseline_features"

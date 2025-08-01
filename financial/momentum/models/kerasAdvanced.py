@@ -39,6 +39,7 @@ class RecurrentModel(KerasModel):
         Args:
             X (pd.DataFrame or np.ndarray): Input data to reshape.
         """
+
         if isinstance(X, pd.DataFrame):
             X = X.values
         n_samples, n_features_total = X.shape
@@ -59,9 +60,7 @@ class RecurrentModel(KerasModel):
             X_train (pd.DataFrame or np.ndarray): Training features.
             y_train (pd.Series or np.ndarray): Training target.
         """
-        if np.isnan(X_train).any() or np.isnan(y_train).any():
-            raise ValueError("X_train or y_train contains NaN values.")
-        
+
         X_train = self.reshape_input(X_train)
         if isinstance(y_train, (pd.Series, pd.DataFrame)):
             y_train = y_train.values
@@ -74,8 +73,6 @@ class RecurrentModel(KerasModel):
             metrics=optimizer_params["metrics"]
         )
 
-        # print("▶️ Entrenando modelo...")
-
         # print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
         # print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
 
@@ -84,9 +81,6 @@ class RecurrentModel(KerasModel):
         # print("y_train.std():", y_train.std())
         # print("y_train.min():", y_train.min())
         # print("y_train.max():", y_train.max())
-
-
-        debug_callback = LambdaCallback(on_epoch_end=lambda epoch, logs: print(f"Epoch {epoch+1}: loss={logs['loss']}, val_loss={logs.get('val_loss')}"))
 
         self.model.fit(
             X_train, y_train,
@@ -119,7 +113,6 @@ class RecurrentModel(KerasModel):
         Returns:
             keras.Model: The initialized Keras model.
         """
-
         layers = self.hyperparameters["topology"]["layers"]
         # activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
@@ -129,10 +122,27 @@ class RecurrentModel(KerasModel):
 
         model = keras.models.Sequential()
         model.add(keras.layers.Input(shape=(horizon, n_features)))
-        RNNLayer = keras.layers.LSTM if self.architecture == "lstm" else keras.layers.SimpleRNN
-        for units in layers[:-1]:
-            model.add(RNNLayer(units, return_sequences=True))
-        model.add(RNNLayer(layers[-1]))
+
+        if self.architecture == "lstm":
+            for units in layers[:-1]:
+                model.add(keras.layers.LSTM(units, return_sequences=True))
+
+            model.add(keras.layers.LSTM(layers[-1]))
+
+        elif self.architecture == "rnn":
+            if n_features == 1 and any(u > horizon for u in layers):
+                raise ValueError(
+                    f" SimpleRNN with 1 input feature and large 'units' ({layers}) is prone to dimensionality errors.\n"
+                    f"Consider switching to LSTM or adding more variables."
+                )
+            for units in layers[:-1]:
+                model.add(keras.layers.SimpleRNN(units, return_sequences=True))
+
+            model.add(keras.layers.SimpleRNN(layers[-1]))
+
+        else:
+            raise ValueError(f"Unsupported recurrent architecture: {self.architecture}")
+        
         model.add(keras.layers.Dense(1, activation=activation_output))
 
         return model
@@ -170,12 +180,12 @@ class ConvolutionalModel(KerasModel):
         n_samples, n_features_total = X.shape
         timesteps = self.hyperparameters["input"]["horizon"]
         n_features = n_features_total // timesteps
-
+        #print(f"Reshaping input to: (n_samples={n_samples}, timesteps={timesteps}, n_features={n_features})")
         if self.architecture == "cnn":
             return X.reshape((n_samples, timesteps, n_features))
         elif self.architecture == "cnn2d":
             # reshape to (n_samples, height, width, channels)
-            return X.reshape((n_samples, timesteps, n_features, 1))
+            return X.reshape((n_samples, timesteps, n_features, 1)) 
         else:
             raise ValueError(f"Unsupported architecture for reshape: {self.architecture}")
 
@@ -187,9 +197,6 @@ class ConvolutionalModel(KerasModel):
             X_train (pd.DataFrame or np.ndarray): Training input data.
             y_train (pd.Series or np.ndarray): Training target data.
         """
-
-        if np.isnan(X_train).any() or np.isnan(y_train).any():
-            raise ValueError("X_train or y_train contains NaN values.")
 
         X_train = self.reshape_input(X_train)
         if isinstance(y_train, (pd.Series, pd.DataFrame)):
@@ -235,25 +242,46 @@ class ConvolutionalModel(KerasModel):
         activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
         horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size()
+        n_features = self.sources.size() // horizon
 
+        intermediate_kernel_size = 1
         model = keras.models.Sequential()
 
         if self.architecture == "cnn":
             model.add(keras.layers.Input(shape=(horizon, n_features)))
-            for units in layers:
-                model.add(keras.layers.Conv1D(filters=units, kernel_size=horizon, activation=activation_hidden, padding='same'))
-                model.add(keras.layers.MaxPooling1D(pool_size=2))
+            model.add(keras.layers.Conv1D(filters=layers[0], kernel_size=horizon, activation=activation_hidden, padding='valid'))
+
+            for units in layers[1:]:
+                model.add(keras.layers.Conv1D(filters=units, kernel_size=intermediate_kernel_size, activation=activation_hidden))
+            
             model.add(keras.layers.Flatten())
             model.add(keras.layers.Dense(1, activation=activation_output))
+            
+        # if self.architecture == "cnn":
+        #     model.add(keras.layers.Input(shape=(horizon, n_features)))
+        #     for units in layers:
+        #         model.add(keras.layers.Conv1D(filters=units, kernel_size=horizon, activation=activation_hidden, padding='same'))
+        #         model.add(keras.layers.MaxPooling1D(pool_size=2))
+        #     model.add(keras.layers.Flatten())
+        #     model.add(keras.layers.Dense(1, activation=activation_output))
 
         elif self.architecture == "cnn2d":
             model.add(keras.layers.Input(shape=(horizon, n_features, 1)))
-            for units in layers:
-                model.add(keras.layers.Conv2D(filters=units, kernel_size=(horizon, n_features), activation=activation_hidden, padding='same'))
-                model.add(keras.layers.MaxPooling2D(pool_size=(2, 1)))
+            model.add(keras.layers.Conv2D(filters=layers[0], kernel_size=(horizon, n_features), activation=activation_hidden, padding='valid'))
+
+            for units in layers[1:]:
+                model.add(keras.layers.Conv2D(filters=units, kernel_size=(intermediate_kernel_size, 1), activation=activation_hidden))
+            
             model.add(keras.layers.Flatten())
             model.add(keras.layers.Dense(1, activation=activation_output))
+
+        # elif self.architecture == "cnn2d":
+        #     model.add(keras.layers.Input(shape=(horizon, n_features, 1)))
+        #     for units in layers:
+        #         model.add(keras.layers.Conv2D(filters=units, kernel_size=(horizon, n_features), activation=activation_hidden, padding='same'))
+        #         model.add(keras.layers.MaxPooling2D(pool_size=(2, 1)))
+        #     model.add(keras.layers.Flatten())
+        #     model.add(keras.layers.Dense(1, activation=activation_output))
 
         else:
             raise ValueError(f"Unsupported CNN architecture: {self.architecture}")
@@ -303,9 +331,6 @@ class TransformerModel(KerasModel):
             X_train (pd.DataFrame or np.ndarray): Training features.
             y_train (pd.Series or np.ndarray): Training target.
         """
-
-        if np.isnan(X_train).any() or np.isnan(y_train).any():
-            raise ValueError("X_train or y_train contains NaN values.")
 
         X_train = self.reshape_input(X_train)
         if isinstance(y_train, (pd.Series, pd.DataFrame)):
