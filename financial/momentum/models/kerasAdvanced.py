@@ -117,7 +117,7 @@ class RecurrentModel(KerasModel):
         # activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
         horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size()  # Number of tickers
+        n_features = self.sources.size()  // horizon # For each ticker we have horizon values, we need to divide by horizon to get the number of tickers
         #print(self.sources, n_features)
 
         model = keras.models.Sequential()
@@ -130,11 +130,6 @@ class RecurrentModel(KerasModel):
             model.add(keras.layers.LSTM(layers[-1]))
 
         elif self.architecture == "rnn":
-            if n_features == 1 and any(u > horizon for u in layers):
-                raise ValueError(
-                    f" SimpleRNN with 1 input feature and large 'units' ({layers}) is prone to dimensionality errors.\n"
-                    f"Consider switching to LSTM or adding more variables."
-                )
             for units in layers[:-1]:
                 model.add(keras.layers.SimpleRNN(units, return_sequences=True))
 
@@ -242,19 +237,20 @@ class ConvolutionalModel(KerasModel):
         activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
         horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size() // horizon
+        n_features = self.sources.size() // horizon # For each ticker we have horizon values, we need to divide by horizon to get the number of tickers
 
-        intermediate_kernel_size = 1
         model = keras.models.Sequential()
 
         if self.architecture == "cnn":
             model.add(keras.layers.Input(shape=(horizon, n_features)))
             model.add(keras.layers.Conv1D(filters=layers[0], kernel_size=horizon, activation=activation_hidden, padding='valid'))
 
-            for units in layers[1:]:
-                model.add(keras.layers.Conv1D(filters=units, kernel_size=intermediate_kernel_size, activation=activation_hidden))
-            
             model.add(keras.layers.Flatten())
+
+            for units in layers[1:]:
+                model.add(keras.layers.Dense(units, activation=activation_hidden))
+
+
             model.add(keras.layers.Dense(1, activation=activation_output))
             
         # if self.architecture == "cnn":
@@ -269,10 +265,11 @@ class ConvolutionalModel(KerasModel):
             model.add(keras.layers.Input(shape=(horizon, n_features, 1)))
             model.add(keras.layers.Conv2D(filters=layers[0], kernel_size=(horizon, n_features), activation=activation_hidden, padding='valid'))
 
-            for units in layers[1:]:
-                model.add(keras.layers.Conv2D(filters=units, kernel_size=(intermediate_kernel_size, 1), activation=activation_hidden))
-            
             model.add(keras.layers.Flatten())
+            for units in layers[1:]:
+                model.add(keras.layers.Dense(units, activation=activation_hidden))
+
+
             model.add(keras.layers.Dense(1, activation=activation_output))
 
         # elif self.architecture == "cnn2d":
@@ -288,6 +285,7 @@ class ConvolutionalModel(KerasModel):
     
         return model
 
+import tensorflow as tf
 
 class TransformerModel(KerasModel):
     """
@@ -376,29 +374,37 @@ class TransformerModel(KerasModel):
         """
 
         horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size()
+        n_features = self.sources.size() // horizon # For each ticker we have horizon values, we need to divide by horizon to get the number of tickers
         num_heads = self.hyperparameters["model"].get("num_heads", 2)
         ff_dim = self.hyperparameters["model"].get("ff_dim", 64)
         dropout_rate = self.hyperparameters["model"].get("dropout", 0.1)
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
 
         inputs = keras.Input(shape=(horizon, n_features))
-        
+        def add_position(x):
+            positions = tf.range(start=0, limit=horizon, delta=1, dtype=tf.float32)
+            positions = tf.reshape(positions, (1, horizon, 1))
+            positions = tf.tile(positions, [tf.shape(x)[0], 1, 1])
+            return tf.concat([x, positions], axis=-1)
+
+        x = keras.layers.Lambda(add_position, name="add_position")(inputs)
+
         # Self-attention
-        x = keras.layers.LayerNormalization()(inputs)
-        attn_output = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=n_features)(x, x)
+        x = keras.layers.LayerNormalization()(x)
+        attn_output = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=16)(x, x)
         x = keras.layers.Add()([x, attn_output])
         x = keras.layers.Dropout(dropout_rate)(x)
         
         # Feedforward
         x2 = keras.layers.LayerNormalization()(x)
         x2 = keras.layers.Dense(ff_dim, activation="relu")(x2)
-        x2 = keras.layers.Dense(n_features)(x2)
-        x = keras.layers.Add()([x, x2])
+        x2 = keras.layers.Dense(ff_dim)(x2)
+        x = keras.layers.Dense(ff_dim)(x)
+        x = keras.layers.Add()([x, x2])         
         x = keras.layers.Dropout(dropout_rate)(x)
         
         # Output
-        x = keras.layers.GlobalAveragePooling1D()(x)
+        x = keras.layers.Flatten()(x)
         outputs = keras.layers.Dense(1, activation=activation_output)(x)
 
         model = keras.Model(inputs=inputs, outputs=outputs)
