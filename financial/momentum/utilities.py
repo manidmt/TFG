@@ -59,7 +59,7 @@ from typing import Dict, Any
 from sklearn.metrics import r2_score
 from financial.lab.experiment import Experiment
 
-def metrics(experiment, predictions, target, model_path):
+def metrics(experiment, predictions, target, model_path, global_model=True):
     
     all_metrics_to_save: Dict[str, Any] = {}
     
@@ -80,36 +80,36 @@ def metrics(experiment, predictions, target, model_path):
         }
         all_metrics_to_save["global"] = global_metrics
     
-    
-    if experiment.train.samples() > 0:
-        print("TRAIN: ")
-        train_results_obj = experiment.train
-        train_metrics = {
-            "n": train_results_obj.samples(),
-            "MSE": train_results_obj.MSE(),
-            "RMSE": train_results_obj.RMSE(),
-            "MAE": train_results_obj.MAE(),
-            "MAPE": train_results_obj.MAPE()
-        }
-        print(f"n={train_metrics['n']} MSE={train_metrics['MSE']:.4f} RMSE={train_metrics['RMSE']:.4f} MAE={train_metrics['MAE']:.4f} MAPE={train_metrics['MAPE']:.4f}")
-        all_metrics_to_save["train"] = train_metrics
-    
-    if experiment.test.samples() > 0:
-        print("TEST: ")
-        test_results_obj = experiment.test
-        test_metrics = {
-            "n": test_results_obj.samples(),
-            "MSE": test_results_obj.MSE(),
-            "RMSE": test_results_obj.RMSE(),
-            "MAE": test_results_obj.MAE(),
-            "MAPE": test_results_obj.MAPE()
-        }
-        print(f"n={test_metrics['n']} MSE={test_metrics['MSE']:.4f} RMSE={test_metrics['RMSE']:.4f} MAE={test_metrics['MAE']:.4f} MAPE={test_metrics['MAPE']:.4f}")
-        all_metrics_to_save["test"] = test_metrics
+    if global_metrics:
+        if experiment.train.samples() > 0:
+            print("TRAIN: ")
+            train_results_obj = experiment.train
+            train_metrics = {
+                "n": train_results_obj.samples(),
+                "MSE": train_results_obj.MSE(),
+                "RMSE": train_results_obj.RMSE(),
+                "MAE": train_results_obj.MAE(),
+                "MAPE": train_results_obj.MAPE()
+            }
+            print(f"n={train_metrics['n']} MSE={train_metrics['MSE']:.4f} RMSE={train_metrics['RMSE']:.4f} MAE={train_metrics['MAE']:.4f} MAPE={train_metrics['MAPE']:.4f}")
+            all_metrics_to_save["train"] = train_metrics
+        
+        if experiment.test.samples() > 0:
+            print("TEST: ")
+            test_results_obj = experiment.test
+            test_metrics = {
+                "n": test_results_obj.samples(),
+                "MSE": test_results_obj.MSE(),
+                "RMSE": test_results_obj.RMSE(),
+                "MAE": test_results_obj.MAE(),
+                "MAPE": test_results_obj.MAPE()
+            }
+            print(f"n={test_metrics['n']} MSE={test_metrics['MSE']:.4f} RMSE={test_metrics['RMSE']:.4f} MAE={test_metrics['MAE']:.4f} MAPE={test_metrics['MAPE']:.4f}")
+            all_metrics_to_save["test"] = test_metrics
         
     os.makedirs(model_path, exist_ok=True)
     
-    # Construir el nombre del archivo
+    # Metrics name
     file_name = f"{experiment.name}_metrics.json"
     file_path = os.path.join(model_path, file_name)
     
@@ -122,6 +122,52 @@ def metrics(experiment, predictions, target, model_path):
 
 
 
+import requests
+
+def send_telegram_message(message):
+
+    TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+    TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": message
+    }
+    try:
+        response = requests.post(url, data=payload)
+        if response.status_code != 200:
+            #print("Error en la respuesta de Telegram:")
+            print(response.status_code)
+            print(response.text)
+        #else:
+            #print("Mensaje enviado correctamente.")
+    except Exception as e:
+        print(f"No se pudo enviar el mensaje de Telegram: {e}")
+    
+
+import tensorflow as tf
+from keras import backend as K
+import gc
+
+def reset_gpu():
+    K.clear_session()
+    tf.keras.backend.clear_session()
+    gc.collect()
+
+
+import pickle
+
+def store_results(ticker: str, model_name: str, predictions: pd.Series, cache_path: str, model_path: str):
+
+    base_name = f"model-momentum-{model_name}@pred"
+
+    # Guardar .pkl para Wrapper
+    with open(os.path.join(cache_path, base_name), "wb") as f:
+        pickle.dump(predictions, f)
+    print("Prediciones guardadas pickle")
+    # Guardar .csv para inspección y web
+    predictions.to_csv(os.path.join(model_path, model_name + "_preds.csv"))
+    print("Prediciones guardadas csv")
 
 
 if __name__ == '__main__':
