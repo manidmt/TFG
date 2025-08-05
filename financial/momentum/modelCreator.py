@@ -112,7 +112,7 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
     target = data[lookahead + horizon:]
 
     # Clenow
-    name = f"scikit-learn_clenow_{ticker}__{end_date[:4]}"
+    name = f"scikit-learn_clenow_{ticker}_{end_date[:4]}"
     try:
         if Model.from_file(name, path=os.environ["MODEL"]):
             print(f"Modelo {name} ya existe. Saltando...")
@@ -145,7 +145,7 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
             send_telegram_message(f"Falló el modelo {name}: {e}")
         
     # SVR
-    name = f"scikit-learn_svr_{ticker}__{end_date[:4]}"
+    name = f"scikit-learn_svr_{ticker}_{end_date[:4]}"
     try:
         if Model.from_file(name, path=os.environ["MODEL"]):
             print(f"Modelo {name} ya existe. Saltando...")
