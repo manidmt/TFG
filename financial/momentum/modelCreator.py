@@ -31,7 +31,7 @@ def create_keras_model(ticker, datastore, start_date, end_date, lookahead, horiz
     
     """
     load_dotenv(dotenv_path=find_dotenv())
-    os.environ["MODEL"] = "/home/manidmt/TFG/OTRI/models/keras/"
+    #os.environ["MODEL"] = "/home/manidmt/TFG/OTRI/models/keras/"
 
     data = datastore.get_data(ticker, start_date, end_date)
     target = data[lookahead + horizon:]
@@ -91,13 +91,14 @@ def create_keras_model(ticker, datastore, start_date, end_date, lookahead, horiz
             experiment = ModelExperimentFactory.create_experiment(config)
             experiment.run()
             preds = experiment.reconstruct_absolute_predictions_from_relative()
-            store_results(ticker, name, preds)
+            store_results(ticker, name, preds, os.environ["CACHE"], os.environ["MODEL"])
             send_telegram_message("Resultados guardados")
             metrics(experiment, preds, target, os.environ["MODEL"])
             send_telegram_message("Metricas guardadas")
             reset_gpu()
         except Exception as e:
             print(f"Falló el modelo {name}: {e}")
+            send_telegram_message(f"Falló el modelo {name}: {e}")
 
 
 def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon):
@@ -105,7 +106,7 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
     
     """
     load_dotenv(dotenv_path=find_dotenv())
-    os.environ["MODEL"] = "/home/manidmt/TFG/OTRI/models/scikit-learn/"
+    #os.environ["MODEL"] = "/home/manidmt/TFG/OTRI/models/scikit-learn/"
 
     data = datastore.get_data(ticker, start_date, end_date)
     target = data[lookahead + horizon:]
@@ -119,11 +120,12 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
     except FileNotFoundError:
         print(f"Modelo {name} no existe. Procediendo a entrenar...")
         send_telegram_message(f"Modelo {name} no existe. Procediendo a entrenar...")
+        factory = ExponentialRegressionModelFactory()
         config = {
             "mode": "local",  
             "datastore": datastore,
             "ticker": ticker,
-            "model_factory": "",
+            "model_factory": factory,
             "name": name,
             "start_year": start_date,
             "end_year": end_date,
@@ -134,11 +136,13 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
             experiment = ModelExperimentFactory.create_experiment(config)
             experiment.run()
             preds = experiment.reconstruct_absolute_predictions_from_relative()
+            store_results(ticker, name, preds, os.environ["CACHE"], os.environ["MODEL"])
             send_telegram_message("Resultados guardados")
             metrics(experiment, preds, target, os.environ["MODEL"], global_model=False)
             send_telegram_message("Metricas guardadas")
         except Exception as e:
             print(f"Falló el modelo {name}: {e}")
+            send_telegram_message(f"Falló el modelo {name}: {e}")
         
     # SVR
     name = f"scikit-learn_svr_{ticker}__{end_date[:4]}"
@@ -163,13 +167,16 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
         }
         try:
             experiment = ModelExperimentFactory.create_experiment(config)
+            print(experiment)
             experiment.run()
             preds = experiment.reconstruct_absolute_predictions_from_relative()
+            store_results(ticker, name, preds, os.environ["CACHE"], os.environ["MODEL"])
             send_telegram_message("Resultados guardados")
             metrics(experiment, preds, target, os.environ["MODEL"])
             send_telegram_message("Metricas guardadas")
         except Exception as e:
             print(f"Falló el modelo {name}: {e}")
+            send_telegram_message(f"Falló el modelo {name}: {e}")
     
     # RandomForest
     name = f"scikit-learn_randomforest_{ticker}_{end_date[:4]}"
@@ -193,14 +200,17 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
             "horizon": 90,
         }
         try:
+            print(f"config: {config}")
             experiment = ModelExperimentFactory.create_experiment(config)
             experiment.run()
             preds = experiment.reconstruct_absolute_predictions_from_relative()
+            store_results(ticker, name, preds, os.environ["CACHE"], os.environ["MODEL"])
             send_telegram_message("Resultados guardados")
             metrics(experiment, preds, target, os.environ["MODEL"])
             send_telegram_message("Metricas guardadas")
         except Exception as e:
             print(f"Falló el modelo {name}: {e}")
+            send_telegram_message(f"Falló el modelo {name}: {e}")
 
 
 if __name__ == "__main__":
@@ -216,13 +226,15 @@ if __name__ == "__main__":
     tickers = ["QQQ", "SPY", "URTH", "IYY", "EIMI"]
 
     for ticker in tickers:
-        create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-        create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-    
-    # Top Tech
-    tickers = ["AAPL", "GOOG", "TSLA", "MSTF", "NVDA"]
+       if os.environ["MODELS"] == "/home/manidmt/TFG/OTRI/models/keras/":
+           create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
+       elif os.environ["MODELS"] == "/home/manidmt/TFG/OTRI/models/scikit-learn/":
+           create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
 
+    # Top Tech
+    tickers = ["AAPL", "GOOG", "TSLA", "MSFT", "NVDA", "AMZN", "META"]
     for ticker in tickers:
-        create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-        create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-    
+        if os.environ["MODELS"] == "/home/manidmt/TFG/OTRI/models/keras/":
+            create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
+        elif os.environ["MODELS"] == "/home/manidmt/TFG/OTRI/models/scikit-learn/":
+            create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
