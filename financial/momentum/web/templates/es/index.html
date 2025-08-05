@@ -9,7 +9,7 @@
           {% for model in sklearn_models %}
             <li>
               <a href="/{{ lang }}/acciones/{{ model.ticker }}/{{ model.model_id }}">
-                {{ model.architecture }} - {{ model.ticker }} ({{ model.year_start }}–{{ model.year_end }}) - {{ model.type }}
+                {{ model.architecture }} - {{ model.ticker }} - {{ model.year }}
               </a>
             </li>
           {% endfor %}
@@ -22,7 +22,8 @@
           {% for model in keras_models %}
             <li>
               <a href="/{{ lang }}/acciones/{{ model.ticker }}/{{ model.model_id }}">
-                {{ model.architecture }} - {{ model.ticker }} ({{ model.year_start }}–{{ model.year_end }}) - {{ model.type }}
+                {{ model.architecture }} - {{ model.ticker }} - {{ model.year }}
+                {% if model.type and model.type != 'unknown' %}- {{ model.type }}{% endif %}
               </a>
             </li>
           {% endfor %}

@@ -13,17 +13,17 @@ def parse_model_filename(name):
     Parses filenames like:
     keras_cnn_AAPL_2025_single_metrics.json
     keras_cnn_AAPL_^GSPC_2025_multiple_metrics.json
-    scikit-learn_randomforest_AAPL_2025_single_metrics.json
+    scikit-learn_randomforest_AAPL_2025_metrics.json
     '''
     pattern = (
-        r'^(keras|scikit-learn)_'            # framework
-        r'([a-zA-Z0-9]+)_'                   # architecture
-        r'([\^A-Z0-9]+)'                     # main ticker
-        r'(?:_([\^A-Z0-9_]+))?'              # optional extra tickers
-        r'_(\d{4})_'                         # year
-        r'(single|multiple)_'                # type
-        r'(metrics|preds|hyperparameters|metadata)\.'  # filetype
-        r'(json|csv|xml|keras|h5|pickle)$'   # extension
+        r'^(keras|scikit-learn)_'                # framework
+        r'([a-zA-Z0-9]+)_'                       # architecture
+        r'([\^A-Z0-9]+)'                         # main ticker
+        r'(?:_([\^A-Z0-9_]+))?'                  # optional extra tickers
+        r'_(\d{4})'                              # year
+        r'(?:_(single|multiple))?'               # optional type
+        r'_(metrics|preds|hyperparameters|metadata)\.'  # filetype
+        r'(json|csv|xml|keras|h5|pickle)$'       # extension
     )
 
     match = re.match(pattern, name)
@@ -38,11 +38,12 @@ def parse_model_filename(name):
         'ticker': main_ticker,
         'extra_tickers': extra_tickers.split("_") if extra_tickers else [],
         'year': year,
-        'type': type_,
+        'type': type_ or "unknown",  # o "single" si quieres asumir por defecto
         'filetype': filetype,
         'extension': extension,
         'filename': name
     }
+
 
 
 def list_recent_models(directory=None, max_results=10):
@@ -225,6 +226,7 @@ def get_recent_models_separated(directories=None, max_models=15):
     for directory in directories:
         for filename in os.listdir(directory):
             if re.search(r'_metrics\.json$', filename):
+                print(f"Probando parseo con: {filename}")
                 full_path = os.path.join(directory, filename)
                 try:
                     timestamp = os.path.getmtime(full_path)
@@ -233,10 +235,10 @@ def get_recent_models_separated(directories=None, max_models=15):
                         model_info["timestamp"] = timestamp
                         model_info["filename"] = filename
                         model_info["model_id"] = filename.replace("_metrics.json", "")
-                        
-                        if "keras" in directory:
+
+                        if model_info["framework"] == "keras":
                             keras_models.append(model_info)
-                        elif "scikit-learn" in directory:
+                        elif model_info["framework"] == "scikit-learn":
                             sklearn_models.append(model_info)
 
                 except Exception as e:
