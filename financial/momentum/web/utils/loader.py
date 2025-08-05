@@ -6,29 +6,44 @@ import json
 import pandas as pd
 import xml.etree.ElementTree as ET
 
+import re
+
 def parse_model_filename(name):
     '''
-    Extract model metadata from filenames like:
-    cnn_GOOG_2025_single
-    lstm_^GSPC_2025_single
+    Parses filenames like:
+    keras_cnn_AAPL_2025_single_metrics.json
+    keras_cnn_AAPL_^GSPC_2025_multiple_metrics.json
+    scikit-learn_randomforest_AAPL_2025_single_metrics.json
     '''
-    pattern = r'^([a-zA-Z0-9]+)_([\^A-Z0-9]+)_(\d{4})_(single|multiple)(?:_(.*?))?_(metrics|preds|hyperparameters|metadata)\.(json|csv|xml|keras|h5|pickle)$'
+    pattern = (
+        r'^(keras|scikit-learn)_'            # framework
+        r'([a-zA-Z0-9]+)_'                   # architecture
+        r'([\^A-Z0-9]+)'                     # main ticker
+        r'(?:_([\^A-Z0-9_]+))?'              # optional extra tickers
+        r'_(\d{4})_'                         # year
+        r'(single|multiple)_'                # type
+        r'(metrics|preds|hyperparameters|metadata)\.'  # filetype
+        r'(json|csv|xml|keras|h5|pickle)$'   # extension
+    )
+
     match = re.match(pattern, name)
     if not match:
         return None
 
+    framework, architecture, main_ticker, extra_tickers, year, type_, filetype, extension = match.groups()
 
-    architecture, ticker, year, type_, extra, suffix, extension = match.groups()
     return {
+        'framework': framework,
         'architecture': architecture,
-        'ticker': ticker,
+        'ticker': main_ticker,
+        'extra_tickers': extra_tickers.split("_") if extra_tickers else [],
         'year': year,
         'type': type_,
-        'extra': extra or "",
-        'suffix': suffix,
+        'filetype': filetype,
         'extension': extension,
         'filename': name
     }
+
 
 def list_recent_models(directory=None, max_results=10):
     '''
@@ -194,4 +209,43 @@ def generate_plot(ticker, preds_df, lang="es"):
     )
 
     return pio.to_html(fig, full_html=False)
+
+
+
+def get_recent_models_separated(directories=None, max_models=15):
+    if directories is None:
+        directories = [
+            "/home/manidmt/TFG/OTRI/models/keras/",
+            "/home/manidmt/TFG/OTRI/models/scikit-learn/"
+        ]
+
+    keras_models = []
+    sklearn_models = []
+
+    for directory in directories:
+        for filename in os.listdir(directory):
+            if re.search(r'_metrics\.json$', filename):
+                full_path = os.path.join(directory, filename)
+                try:
+                    timestamp = os.path.getmtime(full_path)
+                    model_info = parse_model_filename(filename)
+                    if model_info:
+                        model_info["timestamp"] = timestamp
+                        model_info["filename"] = filename
+                        model_info["model_id"] = filename.replace("_metrics.json", "")
+                        
+                        if "keras" in directory:
+                            keras_models.append(model_info)
+                        elif "scikit-learn" in directory:
+                            sklearn_models.append(model_info)
+
+                except Exception as e:
+                    print(f"Error reading {filename}: {e}")
+
+    keras_models = sorted(keras_models, key=lambda x: x["timestamp"], reverse=True)[:max_models]
+    sklearn_models = sorted(sklearn_models, key=lambda x: x["timestamp"], reverse=True)[:max_models]
+
+    return keras_models, sklearn_models
+
+
 

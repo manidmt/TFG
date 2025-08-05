@@ -2,5 +2,31 @@
 
 {% block content %}
   <h2>Últimos modelos entrenados</h2>
-  <p>Este es el contenido de prueba de la página de inicio.</p>
+    <div class="latest-models">
+      <div class="model-column">
+        <h3>Machine Learning</h3>
+        <ul>
+          {% for model in sklearn_models %}
+            <li>
+              <a href="/{{ lang }}/acciones/{{ model.ticker }}/{{ model.model_id }}">
+                {{ model.architecture }} - {{ model.ticker }} ({{ model.year_start }}–{{ model.year_end }}) - {{ model.type }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="model-column">
+        <h3>Deep Learning</h3>
+        <ul>
+          {% for model in keras_models %}
+            <li>
+              <a href="/{{ lang }}/acciones/{{ model.ticker }}/{{ model.model_id }}">
+                {{ model.architecture }} - {{ model.ticker }} ({{ model.year_start }}–{{ model.year_end }}) - {{ model.type }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
 {% endblock %}

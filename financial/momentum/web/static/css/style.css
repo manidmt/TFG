@@ -76,6 +76,18 @@ li a:hover {
     color: #e1b12c;
 }
 
+.latest-models {
+  display: flex;
+  gap: 4rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.model-column {
+  flex: 1;
+  max-width: 400px;
+}
+    
 
 /* Ticker section */
 
