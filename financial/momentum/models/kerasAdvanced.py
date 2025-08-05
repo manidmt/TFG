@@ -381,16 +381,9 @@ class TransformerModel(KerasModel):
         activation_output = self.hyperparameters["topology"]["activation"]["output"]
 
         inputs = keras.Input(shape=(horizon, n_features))
-        def add_position(x):
-            positions = tf.range(start=0, limit=horizon, delta=1, dtype=tf.float32)
-            positions = tf.reshape(positions, (1, horizon, 1))
-            positions = tf.tile(positions, [tf.shape(x)[0], 1, 1])
-            return tf.concat([x, positions], axis=-1)
-
-        x = keras.layers.Lambda(add_position, name="add_position")(inputs)
 
         # Self-attention
-        x = keras.layers.LayerNormalization()(x)
+        x = keras.layers.LayerNormalization()(inputs)
         attn_output = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=16)(x, x)
         x = keras.layers.Add()([x, attn_output])
         x = keras.layers.Dropout(dropout_rate)(x)
