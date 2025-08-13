@@ -52,16 +52,18 @@ def create_keras_model(ticker, datastore, start_date, end_date, lookahead, horiz
         try:
             if Model.from_file(name, path=os.environ["MODEL"]):
                 print(f"Modelo {name} ya existe. Saltando...")
-                send_telegram_message(f"Modelo {name} ya existe. Saltando...")
+                #send_telegram_message(f"Modelo {name} ya existe. Saltando...")
                 continue
         except FileNotFoundError:
             print(f"Modelo {name} no existe. Procediendo a entrenar...")
             send_telegram_message(f"Modelo {name} no existe. Procediendo a entrenar...")
 
+        if extra_tickers != None:
+            ticker_list = [ticker] + extra_tickers
         config = {
             "mode": "global",  
             "datastore": datastore,
-            "ticker": ticker,
+            "ticker": ticker_list if extra_tickers else ticker,
             "model_factory": factory,
             "name": name,
             "start_year": start_date,
@@ -116,7 +118,7 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
     try:
         if Model.from_file(name, path=os.environ["MODEL"]):
             print(f"Modelo {name} ya existe. Saltando...")
-            send_telegram_message(f"Modelo {name} ya existe. Saltando...")
+            # send_telegram_message(f"Modelo {name} ya existe. Saltando...")
     except FileNotFoundError:
         print(f"Modelo {name} no existe. Procediendo a entrenar...")
         send_telegram_message(f"Modelo {name} no existe. Procediendo a entrenar...")
@@ -149,7 +151,7 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
     try:
         if Model.from_file(name, path=os.environ["MODEL"]):
             print(f"Modelo {name} ya existe. Saltando...")
-            send_telegram_message(f"Modelo {name} ya existe. Saltando...")
+            # send_telegram_message(f"Modelo {name} ya existe. Saltando...")
     except FileNotFoundError:
         print(f"Modelo {name} no existe. Procediendo a entrenar...")
         send_telegram_message(f"Modelo {name} no existe. Procediendo a entrenar...")
@@ -183,7 +185,7 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
     try:
         if Model.from_file(name, path=os.environ["MODEL"]):
             print(f"Modelo {name} ya existe. Saltando...")
-            send_telegram_message(f"Modelo {name} ya existe. Saltando...")
+            # send_telegram_message(f"Modelo {name} ya existe. Saltando...")
     except FileNotFoundError:
         print(f"Modelo {name} no existe. Procediendo a entrenar...")
         send_telegram_message(f"Modelo {name} no existe. Procediendo a entrenar...")
@@ -224,17 +226,19 @@ if __name__ == "__main__":
 
     # ETFs
     tickers = ["QQQ", "SPY", "URTH", "IYY", "EIMI"]
-
+    print(os.environ["MODEL"])
     for ticker in tickers:
-       if os.environ["MODELS"] == "/home/manidmt/TFG/OTRI/models/keras/":
-           create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-       elif os.environ["MODELS"] == "/home/manidmt/TFG/OTRI/models/scikit-learn/":
+       if os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/keras":
+           #create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
+           create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["^TNX"])
+       elif os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/scikit-learn":
            create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
 
     # Top Tech
     tickers = ["AAPL", "GOOG", "TSLA", "MSFT", "NVDA", "AMZN", "META"]
     for ticker in tickers:
-        if os.environ["MODELS"] == "/home/manidmt/TFG/OTRI/models/keras/":
-            create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-        elif os.environ["MODELS"] == "/home/manidmt/TFG/OTRI/models/scikit-learn/":
+        if os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/keras":
+            #create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
+            create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["^IXIC"])
+        elif os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/scikit-learn":
             create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)

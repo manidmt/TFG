@@ -17,7 +17,7 @@ from financial.momentum.models.kerasAdvanced import ConvolutionalModel
 class TestConvolutionalModel(unittest.TestCase):
 
     def setUp(self):
-        self.horizon = 10
+        self.horizon = 1
         self.variables = [fd.Variable("X1"), fd.Variable("X2")]
         self.sources = fd.Set("input")
         for var in self.variables:
@@ -69,7 +69,7 @@ class TestConvolutionalModel(unittest.TestCase):
         self.assertEqual(predictions.shape, (100, 1))
 
     def test_number_of_params(self):
-        horizon = 90
+        horizon = 1
         n_features = 2
         filters = 64
 

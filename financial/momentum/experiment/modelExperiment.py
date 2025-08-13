@@ -150,8 +150,8 @@ def multi_ticker_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
     horizon = hyperparameters["input"]["horizon"]
     
     features = fd.Set('features')
-    for ticker in tickers:
-        for i in range(1, horizon + 1):
+    for i in range(1, horizon + 1):
+        for ticker in tickers:
             features.append(fd.Change(fd.Variable(ticker), i))
     return features
 
@@ -203,14 +203,14 @@ class ModelExperimentFactory:
                     "model": model_params,
             }
             #print(f"Creating LocalModelExperiment for {ticker} with hyperparameters: {hyperparameters}")
-            return LocalModelExperiment(datastore, ticker, model_factory, name, start_year, end_year, lookahead, horizon)
+            return LocalModelExperiment(datastore, ticker, model_factory, name, start_year, end_year, hyperparameters,lookahead, horizon)
 
         elif mode == "global":
             hyperparameters = {
                 "input": {
                     "features": input_features,
                     "horizon": horizon,
-                    "ticker": ticker
+                    "ticker": ticker_list
                     #"normalization": { "method": "z-score", "start_index": start_year, "end_index": end_year }
                     },
                 "output": {

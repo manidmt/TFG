@@ -80,7 +80,8 @@ def metrics(experiment, predictions, target, model_path, global_model=True):
         }
         all_metrics_to_save["global"] = global_metrics
     
-    if global_metrics:
+    if global_model:
+        print("Test and train metrics are being saved.")
         if experiment.train.samples() > 0:
             print("TRAIN: ")
             train_results_obj = experiment.train
