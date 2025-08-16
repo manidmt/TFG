@@ -68,6 +68,7 @@ li {
 
 li a {
     font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: larger;
     color: #487eb0;
     text-decoration: none;
 }
@@ -88,7 +89,8 @@ li a:hover {
   max-width: 400px;
 }
     
-
+/******************/
+/******************/
 /* Ticker section */
 
 /* Grid de tickers */
@@ -178,5 +180,71 @@ li a:hover {
   padding: 2px 0;
 }
 
+/******************/
+/******************/
+/************/
+/* Simulación */
+
+.sim-form { width: 90%; max-width: 1000px; margin: 0 auto 2rem auto; }
+.sim-form h2 { margin-top: 0; }
+
+.sim-form .form-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.sim-form .full{ grid-column: 1 / -1; }
+
+.sim-form label{
+  display:block;
+  margin: 0 0 6px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.sim-form input[type="number"],
+.sim-form select{
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dcdde1;
+  border-radius: 8px;
+  background: #fff;
+  color: #2f3640;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.sim-form select[multiple]{ height: 220px; padding: 10px; }
+
+.sim-form small.help{
+  display:block;
+  margin-top: 6px;
+  color: #6b7280;
+}
+
+.sim-form .chips{
+  display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;
+}
+.sim-form .chip{
+  background:#f3f4f6; border:1px solid #dcdde1;
+  padding:4px 8px; border-radius:999px; font-size:.85rem; color:#374151;
+}
+
+.sim-form .actions{
+  display:flex; gap:12px; justify-content:flex-end; margin-top: 8px;
+}
+.btn{
+  appearance:none; border:0; border-radius:8px; padding:10px 16px;
+  font-weight:700; cursor:pointer;
+}
+.btn-primary{ background:#487eb0; color:#fff; }
+.btn-primary:hover{ background:#3c6c97; }
+.btn-secondary{ background:#eef2ff; color:#273c75; }
+.btn-secondary:hover{ background:#e1e7ff; }
+
+@media (max-width: 900px){
+  .sim-form .form-grid{ grid-template-columns: 1fr; }
+  .sim-form select[multiple]{ height: 180px; }
+}
 
 
