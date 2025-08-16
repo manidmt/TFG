@@ -140,11 +140,15 @@ def load_model_details(model_id, directory=None):
     except:
         metrics = {}
 
-    # Load predictions
     try:
         preds = pd.read_csv(base + "_preds.csv")
+        if "Date" not in preds.columns:
+            preds = preds.rename(columns={preds.columns[0]: "Date"})
+        preds["Date"] = pd.to_datetime(preds["Date"], errors="coerce")
+        preds = preds.dropna(subset=["Date"]).sort_values("Date")
         predictions = preds.to_dict(orient="records")
-    except:
+    except Exception as e:
+        print(f"[WARN] No se pudieron cargar predicciones: {e}")
         predictions = []
 
     # Load hyperparameters
@@ -185,11 +189,78 @@ def generate_plot(ticker, preds_df, lang="es"):
     data = ds.get_data(ticker)
 
     # 2. Recorta la serie real al rango del CSV
-    real = data.loc[preds_df["Date"]].copy()
-    real = real.to_frame(name="Real")
+    # real = data.loc[preds_df["Date"]].copy()
+    # real = real.to_frame(name="Real")
 
-    # 3. Une predicción y valor real
-    combined = pd.merge(preds_df, real[["Real"]], left_on="Date", right_index=True)
+    # # 3. Une predicción y valor real
+    # combined = pd.merge(preds_df, real[["Real"]], left_on="Date", right_index=True)
+     # Asegura DataFrame con índice datetime limpio
+    # if isinstance(data, pd.Series):
+    #     data = data.to_frame(name="Real")
+    # else:
+    #     # Si hay varias columnas, intenta coger 'Close' o la 1ª numérica
+    #     if "Real" not in data.columns:
+    #         if "Close" in data.columns:
+    #             data = data[["Close"]].rename(columns={"Close": "Real"})
+    #         else:
+    #             num_cols = [c for c in data.columns if pd.api.types.is_numeric_dtype(data[c])]
+    #             if not num_cols:
+    #                 raise ValueError("Data for ticker has no numeric columns to plot.")
+    #             data = data[[num_cols[0]]].rename(columns={num_cols[0]: "Real"})
+
+    # data = data.copy()
+
+    # data.index = pd.to_datetime(data.index, errors="coerce").tz_localize(None).normalize()
+    # data = data.dropna(subset=["Real"]).sort_index()
+
+    # # 2) Normaliza preds_df (por si acaso)
+    # preds = preds_df.copy()
+    # preds["Date"] = pd.to_datetime(preds["Date"], errors="coerce").dt.tz_localize(None).dt.normalize()
+    # preds = preds.dropna(subset=["Date"]).sort_values("Date")
+
+    # # Detecta columna de predicción
+    # pred_cols = [c for c in preds.columns if c != "Date"]
+    # if not pred_cols:
+    #     raise ValueError("preds_df must contain a prediction column besides 'Date'.")
+    # # Preferimos 'Prediction' si existe
+    # if "Prediction" in pred_cols:
+    #     pred_col = "Prediction"
+    # else:
+    #     # coge la primera numérica
+    #     numeric_candidates = [c for c in pred_cols if pd.api.types.is_numeric_dtype(preds[c])]
+    #     pred_col = numeric_candidates[0] if numeric_candidates else pred_cols[0]
+    #     if pred_col != "Prediction":
+    #         preds = preds.rename(columns={pred_col: "Prediction"})
+    #         pred_col = "Prediction"
+
+    # # 3) Alinea fechas (domingo/fiesta -> último día de mercado anterior)
+    # mkt_reset = data.reset_index().rename(columns={"index": "Date"})  # Date + Real
+    # combined = pd.merge_asof(
+    #     preds.sort_values("Date"),
+    #     mkt_reset.sort_values("Date"),
+    #     on="Date",
+    #     direction="backward",                 # usa el cierre anterior
+    #     tolerance=pd.Timedelta("10D"),        # hasta 10 días hacia atrás
+    # ).dropna(subset=["Real"])
+
+    if isinstance(data, pd.Series):
+        data = data.to_frame(name="Real")
+    elif "Real" not in data.columns:
+        if "Close" in data.columns:
+            data = data[["Close"]].rename(columns={"Close": "Real"})
+        else:
+            num = [c for c in data.columns if pd.api.types.is_numeric_dtype(data[c])]
+            data = data[[num[0]]].rename(columns={num[0]: "Real"})
+    data = data.sort_index()
+
+    # Alinear fechas (merge_asof backward)
+    mkt_reset = data.reset_index().rename(columns={"index": "Date"})
+    preds = preds_df.sort_values("Date").copy()
+    combined = pd.merge_asof(
+        preds, mkt_reset, on="Date", direction="backward", tolerance=pd.Timedelta("10D")
+    ).dropna(subset=["Real"])
+
+
 
     # 4. Gráfico interactivo
 
