@@ -3,6 +3,13 @@
 {% block content %}
   <h2>Detalles del modelo {{ model_id }}</h2>
 
+  <h3 class="section-header">Gráfico Real vs Predicción</h3>
+    {% if plot_html %}
+      {{ plot_html | safe }}
+    {% else %}
+      <p>No hay datos suficientes para generar la gráfica.</p>
+    {% endif %}
+    
   <div class="card">
     <h3>Métricas</h3>
     {% for tipo, valores in details.metrics.items() %}
@@ -30,10 +37,4 @@
       <li><strong>{{ key }}:</strong> {{ value }}</li>
     {% endfor %}
   </ul>
-  <h3 class="section-header">Gráfico Real vs Predicción</h3>
-    {% if plot_html %}
-      {{ plot_html | safe }}
-    {% else %}
-      <p>No hay datos suficientes para generar la gráfica.</p>
-    {% endif %}
 {% endblock %}
