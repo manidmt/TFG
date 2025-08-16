@@ -70,7 +70,6 @@ def list_tickers(directory=None):
     Return unique tickers that have at least one model stored
     '''
     directory = directory or os.environ.get("MODEL")
-    print(f"Looking in directory:{directory}")
     tickers = set()
 
     for filename in os.listdir(directory):
@@ -97,6 +96,35 @@ def list_models_for_ticker(ticker, directory=None):
                 models.append(data)
 
     return sorted(models, key=lambda x: (x["year"], x["architecture"]))
+
+def list_extra_tickers_for_arch(arch: str):
+    """
+    """
+    if not arch:
+        return []
+
+    directory = "/home/manidmt/TFG/OTRI/models/keras/"
+
+    pattern = re.compile(
+        rf'^keras_{re.escape(arch)}_([\^A-Z0-9]+)_([\^A-Z0-9]+)_(\d{{4}})_multiple_'
+    )
+
+    extras = set()
+    try:
+        for filename in os.listdir(directory):
+            # Rápido filtro para evitar parsear todo
+            if not (filename.startswith(f"keras_{arch}_") and "_multiple_" in filename):
+                continue
+
+            m = pattern.match(filename)
+            if m:
+                # group(2) es el EXTRA
+                extra = m.group(2)
+                extras.add(extra)
+    except FileNotFoundError:
+        pass
+
+    return sorted(extras)
 
 def load_model_details(model_id, directory=None):
     '''
@@ -226,7 +254,6 @@ def get_recent_models_separated(directories=None, max_models=15):
     for directory in directories:
         for filename in os.listdir(directory):
             if re.search(r'_metrics\.json$', filename):
-                print(f"Probando parseo con: {filename}")
                 full_path = os.path.join(directory, filename)
                 try:
                     timestamp = os.path.getmtime(full_path)

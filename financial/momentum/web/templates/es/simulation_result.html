@@ -1,0 +1,26 @@
+{% extends "es/layout.html" %}
+
+{% block content %}
+  <h2>Resultados de la simulación</h2>
+
+  <div class="simulation-results">
+    <h3>Estadísticas de la cartera</h3>
+    <ul>
+      <li><strong>Retorno acumulado:</strong> {{ stats.cumulative_return | round(2) }}%</li>
+      <li><strong>Retorno anualizado:</strong> {{ stats.annualized_return | round(2) }}%</li>
+      <li><strong>Máxima caída (Drawdown):</strong> {{ stats.maximum_drawdown | round(2) }}%</li>
+      <li><strong>Volatilidad anualizada:</strong> {{ stats.annualized_volatility | round(2) }}%</li>
+      <li><strong>Ratio de Sharpe:</strong> {{ stats.sharpe_ratio | round(2) }}</li>
+      <li><strong>Ratio de Sortino:</strong> {{ stats.sortino_ratio | round(2) }}</li>
+      <li><strong>Rotación mensual media:</strong> {{ stats.average_monthly_rotation | round(2) }}%</li>
+    </ul>
+  </div>
+
+  <div class="simulation-plot">
+    <h3>Evolución de la cartera</h3>
+    {{ graph | safe }}
+  </div>
+
+  <br>
+  <a href="/{{ lang }}/simulation">← Volver al formulario</a>
+{% endblock %}

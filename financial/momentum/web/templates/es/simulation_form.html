@@ -1,0 +1,100 @@
+{% extends "es/layout.html" %}
+
+{% block content %}
+<h2>Simulación de Cartera</h2>
+
+<form method="POST" action="">
+  <label for="start_year">Año de inicio:</label>
+  <input type="number" name="start_year" id="start_year" value="2020" required>
+
+  <label for="end_year">Año de fin:</label>
+  <input type="number" name="end_year" id="end_year" value="2025" required>
+
+  <label for="tickers">Tickers del universo:</label>
+  <select name="tickers" id="tickers" multiple size="10" required>
+    {% for ticker in tickers %}
+      <option value="{{ ticker }}">{{ ticker }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="architecture">Modelo (arquitectura):</label>
+  <select name="architecture" id="architecture" required>
+    <optgroup label="Deep Learning (Keras)">
+      <option value="cnn">cnn</option>
+      <option value="lstm">lstm</option>
+      <option value="rnn">rnn</option>
+      <option value="cnn2d">cnn2d</option>
+    </optgroup>
+    <optgroup label="Machine Learning (scikit-learn)">
+      <option value="svr">svr</option>
+      <option value="randomforest">randomforest</option>
+    </optgroup>
+  </select>
+
+  <label for="extra_tickers">Tickers extra (para el modelo):</label>
+  <select name="extra_tickers" id="extra_tickers" multiple size="6">
+    <option value="" selected>Ninguno</option>
+  </select>
+  <small id="extraHelp" style="display:block;margin-top:4px;color:#6b7280;">
+    Para ML (svr, randomforest) no aplica y se usa “Ninguno”.
+  </small>
+
+  <label for="num_assets">Número de activos en cartera:</label>
+  <input type="number" name="num_assets" id="num_assets" value="4" min="1" required>
+
+  <label for="refuge">Activo refugio (opcional):</label>
+  <select name="refuge" id="refuge">
+    <option value="">Ninguno</option>
+    {% for ticker in tickers %}
+      <option value="{{ ticker }}">{{ ticker }}</option>
+    {% endfor %}
+  </select>
+
+  <br><br>
+  <input type="submit" value="Ejecutar simulación">
+</form>
+
+<script>
+// Elements
+const archSelect   = document.getElementById('architecture');
+const extraSelect  = document.getElementById('extra_tickers');
+
+function setExtrasDisabled(disabled) {
+  extraSelect.disabled = disabled;
+  if (disabled) {
+    // Deja sólo “Ninguno”
+    extraSelect.innerHTML = '<option value="" selected>Ninguno</option>';
+  }
+}
+
+async function loadExtrasForArch(arch) {
+  // ML: deshabilitar
+  if (arch === 'svr' || arch === 'randomforest') {
+    setExtrasDisabled(true);
+    return;
+  }
+  // Keras: cargar desde API
+  setExtrasDisabled(false);
+  try {
+    const resp = await fetch(`/${'{{ lang }}'}/simulacion/api/extras?arch=${encodeURIComponent(arch)}`);
+    const data = await resp.json(); // { extras: [...] }
+    const opts = ['<option value="" selected>Ninguno</option>'];
+    for (const e of data.extras || []) {
+      // Evita repetir el principal, aquí solo van extras válidos
+      opts.push(`<option value="${e}">${e}</option>`);
+    }
+    extraSelect.innerHTML = opts.join('');
+  } catch (err) {
+    console.error('Error cargando extras:', err);
+    // fallback
+    setExtrasDisabled(false);
+    extraSelect.innerHTML = '<option value="" selected>Ninguno</option>';
+  }
+}
+
+// Inicializa en carga
+loadExtrasForArch(archSelect.value);
+archSelect.addEventListener('change', () => loadExtrasForArch(archSelect.value));
+</script>
+{% endblock %}
+
