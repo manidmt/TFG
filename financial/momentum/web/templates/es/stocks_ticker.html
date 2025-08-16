@@ -1,16 +1,16 @@
 {% extends "es/layout.html" %}
 
 {% block content %}
-  <h2>Modelos disponibles para {{ ticker }}</h2>
+  <h2>Modelos disponibles para {{ ticker_name }}</h2>
 
   {% if models %}
     <table>
       <thead>
         <tr>
           <th>Arquitectura</th>
-          <th>Año</th>
+          <th>Entrenado hasta</th>
           <th>Tipo</th>
-          <th>Extras</th>
+          <th>Información Extra</th>
         </tr>
       </thead>
       <tbody>
@@ -18,8 +18,8 @@
         <tr>
           <td><a href="/{{ lang }}/acciones/{{ ticker }}/{{ model.base_name }}">{{ model.architecture }}</a></td>
           <td>{{ model.year }}</td>
-          <td>{{ model.type }}</td>
-          <td>{{ model.extra }}</td>
+          <td>{{ model.framework }}</td>
+          <td>{{ model.extra_tickers }}</td>
         </tr>
         {% endfor %}
       </tbody>

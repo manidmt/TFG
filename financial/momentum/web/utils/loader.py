@@ -32,18 +32,29 @@ def parse_model_filename(name):
 
     framework, architecture, main_ticker, extra_tickers, year, type_, filetype, extension = match.groups()
 
+    if extra_tickers:
+        tickers = extra_tickers.split("_")
+        extras = " + ".join(display_name_for(t) for t in tickers)
+    else:
+        extras = ""
+
     return {
         'framework': framework,
         'architecture': architecture,
         'ticker': main_ticker,
-        'extra_tickers': extra_tickers.split("_") if extra_tickers else [],
+        'extra_tickers': extras,
         'year': year,
-        'type': type_ or "unknown",  # o "single" si quieres asumir por defecto
+        'type': type_ or "unknown",
         'filetype': filetype,
         'extension': extension,
         'filename': name
     }
 
+def _model_dirs():
+    return [
+        "/home/manidmt/TFG/OTRI/models/keras/",
+        "/home/manidmt/TFG/OTRI/models/scikit-learn/",
+    ]
 
 
 def list_recent_models(directory=None, max_results=10):
@@ -69,14 +80,13 @@ def list_tickers(directory=None):
     '''
     Return unique tickers that have at least one model stored
     '''
-    directory = directory or os.environ.get("MODEL")
     tickers = set()
-
-    for filename in os.listdir(directory):
-        if "_metrics.json" in filename:
-            data = parse_model_filename(filename)
-            if data:
-                tickers.add(data["ticker"])
+    for directory in _model_dirs():
+        for filename in os.listdir(directory):
+            if "_metrics.json" in filename:
+                data = parse_model_filename(filename)
+                if data:
+                    tickers.add(data["ticker"])
 
     return sorted(tickers)
 
@@ -85,15 +95,14 @@ def list_models_for_ticker(ticker, directory=None):
     Return all model files (with metadata) for a given ticker,
     including the base filename without suffix (for linking).
     '''
-    directory = directory or os.environ.get("MODEL")
     models = []
-
-    for filename in os.listdir(directory):
-        if "_metrics.json" in filename:
-            data = parse_model_filename(filename)
-            if data and data["ticker"] == ticker:
-                data["base_name"] = filename.replace("_metrics.json", "")
-                models.append(data)
+    for directory in _model_dirs():
+        for filename in os.listdir(directory):
+            if "_metrics.json" in filename:
+                data = parse_model_filename(filename)
+                if data and data["ticker"] == ticker:
+                    data["base_name"] = filename.replace("_metrics.json", "")
+                    models.append(data)
 
     return sorted(models, key=lambda x: (x["year"], x["architecture"]))
 
@@ -130,7 +139,11 @@ def load_model_details(model_id, directory=None):
     '''
     Load metrics, predictions, hyperparameters, and metadata for a given model
     '''
-    directory = directory or os.environ.get("MODEL")
+    if "svr" in model_id or "randomforest" in model_id or "clenow" in model_id:
+        directory = _model_dirs()[1]
+    else:
+        directory = _model_dirs()[0]
+
     base = os.path.join(directory, model_id)
 
     # Load metrics
@@ -180,6 +193,18 @@ from financial.io.cache import NoUpdateStrategy
 from financial.io.file.cache import FileCache
 import financial.data as fd
 
+def align_to_market(preds: pd.DataFrame, data: pd.DataFrame, mode="backward", tol="10D"):
+    preds = preds.sort_values("Date").copy()
+    mkt = data.copy()
+    mkt.index = pd.to_datetime(mkt.index).tz_localize(None).normalize()
+    mkt = mkt.sort_index()
+    mkt_reset = mkt.reset_index().rename(columns={"index": "Date"})
+    out = pd.merge_asof(
+        preds, mkt_reset, on="Date",
+        direction=mode, tolerance=pd.Timedelta(tol)
+    )
+    return out.dropna(subset=["Real"])
+
 def generate_plot(ticker, preds_df, lang="es"):
     # 1. Carga serie original
     ds = fd.CachedDataStore(
@@ -187,61 +212,6 @@ def generate_plot(ticker, preds_df, lang="es"):
         cache=FileCache(cache_path=os.environ["CACHE"] + "/", update_strategy=NoUpdateStrategy())
     )
     data = ds.get_data(ticker)
-
-    # 2. Recorta la serie real al rango del CSV
-    # real = data.loc[preds_df["Date"]].copy()
-    # real = real.to_frame(name="Real")
-
-    # # 3. Une predicción y valor real
-    # combined = pd.merge(preds_df, real[["Real"]], left_on="Date", right_index=True)
-     # Asegura DataFrame con índice datetime limpio
-    # if isinstance(data, pd.Series):
-    #     data = data.to_frame(name="Real")
-    # else:
-    #     # Si hay varias columnas, intenta coger 'Close' o la 1ª numérica
-    #     if "Real" not in data.columns:
-    #         if "Close" in data.columns:
-    #             data = data[["Close"]].rename(columns={"Close": "Real"})
-    #         else:
-    #             num_cols = [c for c in data.columns if pd.api.types.is_numeric_dtype(data[c])]
-    #             if not num_cols:
-    #                 raise ValueError("Data for ticker has no numeric columns to plot.")
-    #             data = data[[num_cols[0]]].rename(columns={num_cols[0]: "Real"})
-
-    # data = data.copy()
-
-    # data.index = pd.to_datetime(data.index, errors="coerce").tz_localize(None).normalize()
-    # data = data.dropna(subset=["Real"]).sort_index()
-
-    # # 2) Normaliza preds_df (por si acaso)
-    # preds = preds_df.copy()
-    # preds["Date"] = pd.to_datetime(preds["Date"], errors="coerce").dt.tz_localize(None).dt.normalize()
-    # preds = preds.dropna(subset=["Date"]).sort_values("Date")
-
-    # # Detecta columna de predicción
-    # pred_cols = [c for c in preds.columns if c != "Date"]
-    # if not pred_cols:
-    #     raise ValueError("preds_df must contain a prediction column besides 'Date'.")
-    # # Preferimos 'Prediction' si existe
-    # if "Prediction" in pred_cols:
-    #     pred_col = "Prediction"
-    # else:
-    #     # coge la primera numérica
-    #     numeric_candidates = [c for c in pred_cols if pd.api.types.is_numeric_dtype(preds[c])]
-    #     pred_col = numeric_candidates[0] if numeric_candidates else pred_cols[0]
-    #     if pred_col != "Prediction":
-    #         preds = preds.rename(columns={pred_col: "Prediction"})
-    #         pred_col = "Prediction"
-
-    # # 3) Alinea fechas (domingo/fiesta -> último día de mercado anterior)
-    # mkt_reset = data.reset_index().rename(columns={"index": "Date"})  # Date + Real
-    # combined = pd.merge_asof(
-    #     preds.sort_values("Date"),
-    #     mkt_reset.sort_values("Date"),
-    #     on="Date",
-    #     direction="backward",                 # usa el cierre anterior
-    #     tolerance=pd.Timedelta("10D"),        # hasta 10 días hacia atrás
-    # ).dropna(subset=["Real"])
 
     if isinstance(data, pd.Series):
         data = data.to_frame(name="Real")
@@ -254,13 +224,17 @@ def generate_plot(ticker, preds_df, lang="es"):
     data = data.sort_index()
 
     # Alinear fechas (merge_asof backward)
-    mkt_reset = data.reset_index().rename(columns={"index": "Date"})
-    preds = preds_df.sort_values("Date").copy()
-    combined = pd.merge_asof(
-        preds, mkt_reset, on="Date", direction="backward", tolerance=pd.Timedelta("10D")
-    ).dropna(subset=["Real"])
+    # mkt_reset = data.reset_index().rename(columns={"index": "Date"})
+    # preds = preds_df.sort_values("Date").copy()
+    # combined = pd.merge_asof(
+    #     preds, mkt_reset, on="Date", direction="backward", tolerance=pd.Timedelta("10D")
+    # ).dropna(subset=["Real"])
 
+    preds = preds_df.copy()
+    preds["Date"] = pd.to_datetime(preds["Date"], errors="coerce")
+    preds = preds.dropna(subset=["Date"]).sort_values("Date")
 
+    combined = align_to_market(preds, data, mode="backward", tol="10D")
 
     # 4. Gráfico interactivo
 
@@ -312,17 +286,12 @@ def generate_plot(ticker, preds_df, lang="es"):
 
 
 
-def get_recent_models_separated(directories=None, max_models=15):
-    if directories is None:
-        directories = [
-            "/home/manidmt/TFG/OTRI/models/keras/",
-            "/home/manidmt/TFG/OTRI/models/scikit-learn/"
-        ]
+def get_recent_models_separated(max_models=15):
 
     keras_models = []
     sklearn_models = []
 
-    for directory in directories:
+    for directory in _model_dirs():
         for filename in os.listdir(directory):
             if re.search(r'_metrics\.json$', filename):
                 full_path = os.path.join(directory, filename)
@@ -346,6 +315,30 @@ def get_recent_models_separated(directories=None, max_models=15):
     sklearn_models = sorted(sklearn_models, key=lambda x: x["timestamp"], reverse=True)[:max_models]
 
     return keras_models, sklearn_models
+
+
+from functools import lru_cache
+import xml.etree.ElementTree as ET
+
+@lru_cache()
+def _ticker_name_map(xml_path=None):
+    xml_path = xml_path or os.environ.get("DATA_XML", "/home/manidmt/TFG/OTRI/data/data.xml")
+    mapping = {}
+    try:
+        root = ET.parse(xml_path).getroot()
+        for var in root.findall("variable"):
+            t = (var.findtext("ticker") or "").strip()
+            d = (var.findtext("description") or "").strip()
+            if t and d:
+                mapping[t] = d
+    except Exception:
+        pass
+
+    return mapping
+
+def display_name_for(ticker: str) -> str:
+    print(ticker)
+    return _ticker_name_map().get(ticker, ticker)
 
 
 
