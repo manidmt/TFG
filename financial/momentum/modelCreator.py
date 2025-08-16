@@ -230,7 +230,7 @@ if __name__ == "__main__":
     for ticker in tickers:
        if os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/keras":
            #create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-           create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["^TNX"])
+           create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["M2NS"])
        elif os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/scikit-learn":
            create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
 
@@ -239,6 +239,6 @@ if __name__ == "__main__":
     for ticker in tickers:
         if os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/keras":
             #create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-            create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["^IXIC"])
+            create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["M2NS"])
         elif os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/scikit-learn":
             create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
