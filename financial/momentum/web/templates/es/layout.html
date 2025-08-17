@@ -17,5 +17,11 @@
     <main>
         {% block content %}{% endblock %}
     </main>
+    <footer>
+        <p>
+            <a href="{{ url_for('main.autor', lang=lang) }}">Autor</a> |
+            <a href="https://github.com/manidmt/TFG.git" target="_blank">Repo</a>
+        </p>
+    </footer>
 </body>
 </html>

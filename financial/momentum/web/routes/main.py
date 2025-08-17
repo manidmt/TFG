@@ -12,3 +12,7 @@ def index(lang):
                            lang=lang, 
                            keras_models=keras_models, 
                            sklearn_models=sklearn_models)
+
+@main_bp.route("/autor")
+def autor(lang):
+    return render_template(f"{lang}/autor.html", lang=lang)
