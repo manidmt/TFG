@@ -353,3 +353,49 @@ li a {
 }
 
 
+/******************/
+/******************/
+/***** Autor ******/
+
+/* Layout angosto para páginas tipo "About" */
+.container-narrow{
+  width: 90%;
+  max-width: 920px;
+  margin: 24px auto 32px;
+}
+
+/* Autor */
+.author-card { padding: 28px; }
+.author-header{
+  display: flex; align-items: center; gap: 16px; margin-bottom: 10px;
+}
+/* .avatar{
+  width: 64px; height: 64px; border-radius: 50%;
+  background: #487eb0; color:#fff; display:flex; align-items:center; justify-content:center;
+  font-weight: 800; font-size: 1.1rem;
+} */
+
+.avatar{
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #487eb0;
+}
+
+.author-name{ margin: 0 0 4px 0; text-align: left; }
+.author-subtitle{ margin: 0; color: #6b7280; font-size: 0.95rem; }
+.lead{ margin-top: 14px; font-size: 1.02rem; line-height: 1.6; }
+
+.author-links{
+  display:flex; gap:10px; flex-wrap:wrap; margin: 14px 0 6px;
+}
+.author-links .btn{ border:1px solid #dcdde1; }
+.author-links .btn-secondary{ background:#eef2ff; color:#273c75; }
+.author-links .btn-secondary:hover{ background:#e1e7ff; }
+
+.bullets{
+  margin: 12px 0 0 0; padding-left: 18px;
+}
+.bullets li{ margin: 6px 0; }
+

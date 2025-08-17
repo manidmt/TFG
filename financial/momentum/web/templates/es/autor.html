@@ -1,11 +1,34 @@
 {% extends "es/layout.html" %}
 
 {% block content %}
-  <h2>Manuel Díaz-Meco</h2>
-  <p>Este proyecto ha sido desarrollado como parte del Trabajo Final de Grado del Doble Grado en Ingeniería Informática y Matemáticas por la Universidad de Granada.</p>
-  <p>Para más información, puedes visitar mis perfiles tanto en LinkedIn como en GitHub:</p>
-  <ul>
-    <li><a href="https://www.linkedin.com/in/manuel-diaz-meco-terres" target="_blank">LinkedIn</a></li>
-    <li><a href="https://github.com/manidmt" target="_blank">GitHub</a></li>
-  </ul>
+  <section class="container-narrow">
+    <div class="card author-card">
+      <div class="author-header">
+        <img class="avatar" src="{{ url_for('static', filename='img/foto.jpg') }}" alt="Foto de Manuel" />
+        <div>
+          <h2 class="author-name">Manuel Díaz-Meco</h2>
+          <p class="author-subtitle">Doble grado en Ingeniería Informática y Matemáticas · Univ. de Granada</p>
+        </div>
+      </div>
+
+      <p class="lead">
+        Esta página web forma parte de mi Trabajo Final de Grado del Doble Grado en Ingeniería Informática y Matemáticas por la Universidad de Granada.        
+      </p>
+      <p class="lead">
+        El proyecto consiste en el desarrollo y entrenamiento de modelos de Machine Learning y Deep Learning para la predicción de acciones en mercados financieros.
+        Con dichas predicciones, se construyen carteras de inversión cuyos activos rotan mensualmente en función de la rentabilidad predicha.
+      </p>
+      <p class="lead">
+        Para más información, tienes un enlace tanto a la memoria del TFG como a mi perfil de GitHub, además de mi perfil de LinkedIn.
+      </p>
+      <div class="author-links">
+        <a class="btn btn-primary" href="https://www.linkedin.com/in/manuel-diaz-meco-terres/" target="_blank" rel="noopener">LinkedIn</a>
+        <a class="btn btn-secondary" href="https://github.com/manidmt" target="_blank" rel="noopener">GitHub</a>
+        <a class="btn" href="mailto:manidmt5@gmail.com">manidmt5@gmail.com</a>
+      </div>
+      <p class="lead">
+        Este proyecto ha utilizado como base el código de mi tutor, Fernando Berzal, profesor del Departamento de Ciencias de la Computación e Inteligencia Artificial de la UGR.
+      </p>
+    </div>
+  </section>
 {% endblock %}
