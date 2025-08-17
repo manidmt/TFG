@@ -3,7 +3,7 @@
 {% block content %}
 <div class="card sim-form">
   <h2>Simulación de Cartera</h2>
-  <p style="text-align:center;color:#6b7280;margin-top:0;">Configura periodo, universo y modelo. Los “Tickers extra” solo aplican a redes Keras.</p>
+  <p style="text-align:center;color:#6b7280;margin-top:0;">Configura las fechas, los activos y  el modelo para la simulación.</p>
 
   <form method="POST" action="">
     <div class="form-grid">
@@ -14,12 +14,12 @@
       </div>
       <div>
         <label for="end_year">Año de fin</label>
-        <input type="number" name="end_year" id="end_year" value="2025" required>
+        <input type="number" name="end_year" id="end_year" value="2024" required>
       </div>
 
       <!-- Universo -->
       <div>
-        <label for="tickers">Tickers del universo</label>
+        <label for="tickers">Tickers para la simulación</label>
         <select name="tickers" id="tickers" multiple size="10" required>
           {% for ticker in tickers %}
             <option value="{{ ticker }}">{{ ticker }}</option>
@@ -41,7 +41,7 @@
           <optgroup label="Machine Learning (scikit-learn)">
             <option value="svr">svr</option>
             <option value="randomforest">randomforest</option>
-          </optgroup>
+          </optgroup> 
         </select>
 
         <div style="margin-top:12px;">
@@ -63,9 +63,8 @@
         <label for="refuge">Activo refugio (opcional)</label>
         <select name="refuge" id="refuge">
           <option value="">Ninguno</option>
-          {% for ticker in tickers %}
-            <option value="{{ ticker }}">{{ ticker }}</option>
-          {% endfor %}
+          <option value="GLD">Oro</option>
+          <option value="^TNX">Bono USA 10 años</option>
         </select>
       </div>
 
