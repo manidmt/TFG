@@ -15,3 +15,16 @@
     <p>No se han encontrado modelos aún.</p>
   {% endif %}
 {% endblock %}
+
+{% block helptext %}
+  <h4>Acciones con modelos disponibles</h4>
+  <p>
+    Aquí se muestran los tickers que tienen al menos algún modelo entrenado.
+    Puedes hacer clic en un ticker para ver los modelos específicos disponibles para esa acción.
+    Si no ves el ticker que buscas, es porque no hay modelos disponibles para esa acción. ¡Puede que en el futuro se añadan más!
+  </p>
+  <p>
+    El ticker de una acción es el símbolo único que identifica a una empresa que cotiza en bolsa.
+    Por ejemplo, "AAPL" para Apple o "GOOGL" para Alphabet (Google).
+  </p>
+{% endblock %}

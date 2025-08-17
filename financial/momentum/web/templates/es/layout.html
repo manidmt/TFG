@@ -13,7 +13,21 @@
             <a href="/es/acciones">Acciones</a> |
             <a href="/es/simulacion">Simulaciones</a>
         </nav>
+
+        <button class="help-btn" id="helpBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="helpPopover" title="Ayuda">
+            ?
+            <span class="help-tooltip" role="tooltip">Ayuda</span>
+        </button>
     </header>
+    <div class="help-popover" id="helpPopover" role="dialog" aria-modal="false" aria-labelledby="helpTitle">
+        <div class="help-popover-header">
+            <h3 id="helpTitle">Ayuda</h3>
+            <button class="help-close" id="helpClose" aria-label="Cerrar">×</button>
+        </div>
+        <div class="help-popover-body">
+            {% block helptext %}{% endblock %}
+        </div>
+    </div>
     <main>
         {% block content %}{% endblock %}
     </main>
@@ -25,3 +39,35 @@
     </footer>
 </body>
 </html>
+
+<script>
+(function(){
+  const btn = document.getElementById('helpBtn');
+  const pop = document.getElementById('helpPopover');
+  const closeBtn = document.getElementById('helpClose');
+
+  function openPop(){
+    pop.classList.add('open');
+    btn.setAttribute('aria-expanded','true');
+  }
+  function closePop(){
+    pop.classList.remove('open');
+    btn.setAttribute('aria-expanded','false');
+  }
+
+  btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    pop.classList.contains('open') ? closePop() : openPop();
+  });
+  closeBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    closePop();
+  });
+  document.addEventListener('click', (e)=>{
+    if(!pop.contains(e.target) && e.target !== btn) closePop();
+  });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape') closePop();
+  });
+})();
+</script>

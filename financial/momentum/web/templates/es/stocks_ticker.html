@@ -28,3 +28,25 @@
     <p>No se encontraron modelos para {{ ticker }}</p>
   {% endif %}
 {% endblock %}
+
+{% block helptext %}
+  <h4>Modelos para cada acción</h4>
+  <p>
+    Aquí se muestran los detalles de los modelos disponibles para la acción seleccionada. Puedes hacer clic en el nombre de la arquitectura para ver más detalles sobre cada modelo.
+  </p>
+  <p>
+    Si no ves el modelo que buscas, es porque aún no se ha entrenado un modelo para esa acción (o no se pretende hacer). ¡Puede que en el futuro se añadan más!
+  </p>
+  <p>
+    Qué es cada columna:
+  </p>
+  <ul>
+    <li><strong>Arquitectura:</strong> El tipo de modelo utilizado (por ejemplo, LSTM, GRU, etc.).</li>
+    <li><strong>Entrenado hasta:</strong> La fecha hasta la cual se ha entrenado el modelo. Para 2025 los datos son hasta junio</li>
+    <li><strong>Tipo:</strong> Si se ha creado usando keras (Deep Learning) o scikit-learn (Machine Learning).</li>
+    <li><strong>Información Extra:</strong> Si el modelo, además de la acción principal, también ha contado con información extra para su entrenamiento.</li>
+  </ul>
+  <p>
+    Para más información sobre qué es cada cosa, recomiendo buscar las secciones correspondientes en la memoria del TFG (la tienes ahí abajo).
+  </p>
+{% endblock %}

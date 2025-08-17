@@ -45,12 +45,11 @@
         </select>
 
         <div style="margin-top:12px;">
-          <label for="extra_tickers">Tickers extra (para el modelo)</label>
-          <select name="extra_tickers" id="extra_tickers" multiple size="6">
-            <option value="" selected>Ninguno</option>
+          <label for="extra_ticker">Ticker extra (para el modelo)</label>
+          <select name="extra_ticker" id="extra_tickers">
+            <option value="">Ninguno</option>
           </select>
           <small class="help">Para ML (svr, randomforest) no aplica y se usa “Ninguno”.</small>
-          <div id="extra-summary" class="chips" aria-live="polite"></div>
         </div>
       </div>
 
@@ -80,53 +79,61 @@
 <script>
 const archSelect  = document.getElementById('architecture');
 const extraSelect = document.getElementById('extra_tickers');
-const extraSum    = document.getElementById('extra-summary');
 const clearBtn    = document.getElementById('clearBtn');
 
-function setExtrasDisabled(disabled){
+function disableExtras(disabled){
   extraSelect.disabled = disabled;
   if(disabled){
-    extraSelect.innerHTML = '<option value="" selected>Ninguno</option>';
-    renderChips([]);
+    extraSelect.innerHTML = '<option value="">Ninguno</option>';
   }
 }
-function renderChips(values){
-  extraSum.innerHTML = '';
-  values.filter(v => v).forEach(v=>{
-    const chip = document.createElement('span');
-    chip.className='chip'; chip.textContent=v;
-    extraSum.appendChild(chip);
-  });
-}
+
 async function loadExtrasForArch(arch){
-  if(arch==='svr' || arch==='randomforest'){ setExtrasDisabled(true); return; }
-  setExtrasDisabled(false);
+  if(arch==='svr' || arch==='randomforest'){ disableExtras(true); return; }
+  disableExtras(false);
   try{
-    const resp = await fetch(`/{{ lang }}/simulacion/api/extras?arch=${encodeURIComponent(arch)}`);
-    const data = await resp.json(); // { extras: [...] }
-    const opts = ['<option value="" selected>Ninguno</option>'];
+    const resp  = await fetch(`/{{ lang }}/simulacion/api/extras?arch=${encodeURIComponent(arch)}`);
+    const data  = await resp.json(); // { extras: [...] }
+    const opts  = ['<option value="">Ninguno</option>'];
     for(const e of (data.extras||[])){ opts.push(`<option value="${e}">${e}</option>`); }
     extraSelect.innerHTML = opts.join('');
-    renderChips([]);
   }catch(e){
     console.error('Error cargando extras', e);
-    extraSelect.innerHTML = '<option value="" selected>Ninguno</option>';
-    renderChips([]);
+    extraSelect.innerHTML = '<option value="">Ninguno</option>';
   }
 }
-loadExtrasForArch(archSelect.value);
+
 archSelect.addEventListener('change', ()=>loadExtrasForArch(archSelect.value));
-extraSelect.addEventListener('change', ()=>{
-  const vals = Array.from(extraSelect.selectedOptions).map(o=>o.value).filter(Boolean);
-  renderChips(vals);
-});
+
 clearBtn.addEventListener('click', ()=>{
   document.getElementById('start_year').value = 2020;
   document.getElementById('end_year').value = 2025;
   document.getElementById('tickers').selectedIndex = -1;
   document.getElementById('num_assets').value = 4;
   document.getElementById('refuge').value = '';
-  loadExtrasForArch(archSelect.value);
+  extraSelect.value = '';
+  loadExtrasForArch(archSelect.value);  
 });
+
+loadExtrasForArch(archSelect.value);
 </script>
+{% endblock %}
+
+{% block helptext %}
+  <h4>Configuración de la simulación</h4>
+  <p>
+    Aquí se establecen los parámetros para hacer una simulación de la cartera en función de los parámetros:
+  </p>
+  <ul>
+    <li><strong>Año de inicio:</strong> Año de inicio para la simulación.</li>
+    <li><strong>Año de fin:</strong> Año de fin para la simulación.</li>
+    <li><strong>Modelo:</strong> Modelo que se utilizará para la simulación.</li>
+    <li><strong>Tickers:</strong> Activos que se tienen en cuenta para crear la cartera. Usa Ctrl/Shift + Click para seleccionar varios</li>
+    <li><strong>Tickers extra:</strong> Activos adicionales que el modelo puede usar para mejorar la predicción (solo para modelos Keras).</li>
+    <li><strong>Número de activos:</strong> Cuántos activos habrá en la cartera en cada momento.</li>
+    <li><strong>Activo refugio:</strong> Activo refugio opcional para la cartera.</li>
+  </ul>
+  <p>
+    Para más información, recomiendo consultar la sección correspondiente en la memoria del TFG (tienes el link ahí abajo).
+  </p>
 {% endblock %}

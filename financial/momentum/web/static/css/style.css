@@ -393,6 +393,8 @@ li a {
 
 .tab-panels {
   margin-top: 1rem;
+  color: #273c75;
+  background-color: #f5f6fa;
 }
 
 .tab-panel {
@@ -495,4 +497,59 @@ li a {
   margin: 12px 0 0 0; padding-left: 18px;
 }
 .bullets li{ margin: 6px 0; }
+
+/******************/
+/******************/
+/***** Helper *****/
+
+.help-btn{
+  position:absolute;           /* header es estático, el botón se sitúa arriba dcha */
+  top: 16px; right: 16px;
+  width:32px; height:32px;
+  border-radius:50%;
+  border:0;
+  background:#487eb0;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 1px 4px rgba(0,0,0,.15);
+}
+.help-btn:hover{ background:#3c6c97; }
+
+/* Tooltip discreto al pasar el ratón */
+.help-btn .help-tooltip{
+  position:absolute; top:-8px; right:110%;
+  background:#273c75; color:#fff;
+  padding:4px 8px; border-radius:6px; font-size:.8rem; white-space:nowrap;
+  opacity:0; transform:translateY(-4px); pointer-events:none; transition:.12s ease;
+}
+.help-btn:hover .help-tooltip{ opacity:1; transform:translateY(0); }
+
+/* Popover */
+.help-popover{
+  position:fixed; z-index:999;
+  right: 16px; top: 70px;
+  width: min(480px, calc(100% - 32px));
+  background:#fff; border:1px solid #e5e7eb; border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  display:none;
+}
+.help-popover.open{ display:block; }
+
+.help-popover-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 12px; border-bottom:1px solid #eef2ff; background:#eef2ff;
+}
+.help-popover-body{
+  padding:12px 14px; max-height:60vh; overflow:auto;
+}
+.help-close{
+  border:0; background:transparent; font-size:20px; cursor:pointer; color:#273c75;
+}
+
+/* Contenido típico dentro del help */
+.help-popover-body h3, .help-popover-body h4 { text-align:left; margin:.2rem 0 .5rem; }
+.help-popover-body p { margin:.4rem 0; line-height:1.5; }
+.help-popover-body ul { max-width:unset; margin:.3rem 0 .6rem 1rem; }
 
