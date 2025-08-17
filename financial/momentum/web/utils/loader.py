@@ -246,6 +246,7 @@ def generate_plot(ticker, preds_df, lang="es"):
         title = "Real vs Prediction"
         xaxis_title = "Date"
         yaxis_title = "Value"
+        legend_pred = "Prediction"
     else:
         label_6m = "6m"
         label_1y = "1a"
@@ -254,13 +255,13 @@ def generate_plot(ticker, preds_df, lang="es"):
         title = "Gráfico Real vs Predicción"
         xaxis_title = "Fecha"
         yaxis_title = "Valor"
+        legend_pred = "Predicción"
+
 
     # Gráfico
     fig = go.Figure()
-    legend_real = "Real" if lang == "en" else "Real"
-    legend_pred = "Prediction" if lang == "en" else "Predicción"
 
-    fig.add_trace(go.Scatter(x=combined["Date"], y=combined["Real"], name=legend_real, line=dict(color="blue")))
+    fig.add_trace(go.Scatter(x=combined["Date"], y=combined["Real"], name="Real", line=dict(color="blue")))
     fig.add_trace(go.Scatter(x=combined["Date"], y=combined.iloc[:, 1], name=legend_pred, line=dict(color="red")))
 
     fig.update_layout(
