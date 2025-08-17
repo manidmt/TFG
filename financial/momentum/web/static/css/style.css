@@ -109,7 +109,6 @@ li a {
 /******************/
 /* Ticker section */
 
-/* Grid de tickers */
 
 .ticker-grid {
     display: flex;
@@ -146,6 +145,59 @@ li a {
     color: #e67e22;
 }
 
+/******************/
+/******************/
+/** Model details */
+
+.cards-grid{
+  width: 90%;
+  max-width: 1100px;
+  margin: 1rem auto 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 900px){
+  .cards-grid{ grid-template-columns: 1fr; }
+}
+
+
+.subtle{
+  margin: 10px 0 6px;
+  color: #6b7280;
+  font-weight: 700;
+  text-transform: none;
+  text-align: left;
+}
+
+.kv-list{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kv-row{
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+.kv-row:last-child{ border-bottom: none; }
+.kv-row .k{ color:#6b7280; }
+.kv-row .v{ font-weight: 600; }
+
+.code-small{
+  margin: 0;
+  font-size: .85rem;
+  line-height: 1.3;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
 
 /* Card styles */
 
@@ -182,6 +234,7 @@ li a {
 }
 
 .metric-block {
+  color:#273c75;
   margin-bottom: 15px;
   padding-left: 10px;
 }
@@ -195,6 +248,50 @@ li a {
 .metric-block li {
   padding: 2px 0;
 }
+
+.accordion{ display:flex; flex-direction:column; gap:10px; }
+
+/* Oculta el triángulo por defecto y ponemos uno custom */
+.acc-summary{
+  list-style:none;
+  cursor:pointer;
+  user-select:none;
+  padding:10px 12px;
+  background:#f5f6fa;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  font-weight:700;
+  color:#273c75;
+  position:relative;
+}
+.acc-summary::-webkit-details-marker{ display:none; }
+.acc-summary::after{
+  content: "▸";
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  transition: transform .15s ease;
+  color:#487eb0;
+}
+
+/* Panel expandido */
+.acc-item[open] .acc-summary{ background:#eef2ff; border-color:#cdd9ff; }
+.acc-item[open] .acc-summary::after{ transform:translateY(-50%) rotate(90deg); }
+
+.acc-panel{
+  padding:10px 12px;
+  border:1px solid #e5e7eb;
+  border-top:0;
+  border-radius:0 0 8px 8px;
+  background:#fff;
+}
+
+/* ya tienes .code-small; solo asegura buen ancho dentro del acordeón */
+.acc-panel .code-small{
+  max-height: 380px;        /* evita panel infinito */
+  overflow:auto;
+}
+
+/* opcional: separa los acordeones dentro de la card */
+.card .acc-item{ border-radius:8px; overflow:hidden; }
 
 /******************/
 /******************/

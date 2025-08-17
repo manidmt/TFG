@@ -10,31 +10,52 @@
       <p>No hay datos suficientes para generar la gráfica.</p>
     {% endif %}
     
-  <div class="card">
-    <h3>Métricas</h3>
-    {% for tipo, valores in details.metrics.items() %}
-      <div class="metric-block">
-        <strong>{{ tipo|capitalize }}:</strong>
-        <ul>
-          {% for k, v in valores.items() %}
-            <li><strong>{{ k }}</strong>: {{ '%.4f'|format(v) }}</li>
-          {% endfor %}
-        </ul>
+  <section class="cards-grid">
+
+    <div class="card">
+      <h3>Métricas</h3>
+      {% for tipo, valores in details.metrics.items() %}
+        <div class="metric-block">
+          <h4 class="subtle">{{ tipo|capitalize }}</h4>
+          <div class="kv-list">
+            {% for k, v in valores.items() %}
+              <div class="kv-row">
+                <span class="k">
+                  {% set key = k|lower %}
+                  {% if key in ['mse','rmse','mae','mape','r2','n'] %}{{ key|upper }}{% else %}{{ k|capitalize }}{% endif %}
+                </span>
+                <span class="v">
+                  {% if key == 'n' %}
+                    {{ '%.0f'|format(v) }}
+                  {% elif key in ['mape'] %}
+                    {{ '%.4f'|format(v) }}%
+                  {% else %}
+                    {{ '%.4f'|format(v) }}
+                  {% endif %}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      <h3>Hiperparámetros</h3>
+      <div class="accordion">
+        {% for key, value in details.hyperparameters.items() %}
+          <details class="acc-item"{% if loop.first %} open{% endif %}>
+            <summary class="acc-summary">{{ key|capitalize }}</summary>
+            <div class="acc-panel">
+              {% if value is string or value is number %}
+                <div class="kv-row"><span class="k">Valor</span><span class="v">{{ value }}</span></div>
+              {% else %}
+                <pre class="code-small">{{ value|tojson(indent=2) }}</pre>
+              {% endif %}
+            </div>
+          </details>
+        {% endfor %}
       </div>
-    {% endfor %}
-  </div>
-
-  <h3>Hiperparámetros</h3>
-  <ul>
-    {% for key, value in details.hyperparameters.items() %}
-      <li><strong>{{ key }}:</strong> {{ value }}</li>
-    {% endfor %}
-  </ul>
-
-  <h3>Metadatos</h3>
-  <ul>
-    {% for key, value in details.metadata.items() %}
-      <li><strong>{{ key }}:</strong> {{ value }}</li>
-    {% endfor %}
-  </ul>
+    </div>
+  </section>
 {% endblock %}
