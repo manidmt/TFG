@@ -58,12 +58,15 @@ def create_keras_model(ticker, datastore, start_date, end_date, lookahead, horiz
             print(f"Modelo {name} no existe. Procediendo a entrenar...")
             send_telegram_message(f"Modelo {name} no existe. Procediendo a entrenar...")
 
-        if extra_tickers != None:
-            ticker_list = [ticker] + extra_tickers
+        if extra_tickers:
+            ticker_field = [ticker] + extra_tickers
+        else:
+            ticker_field = ticker 
+
         config = {
             "mode": "global",  
             "datastore": datastore,
-            "ticker": ticker_list if extra_tickers else ticker,
+            "ticker": ticker_field,
             "model_factory": factory,
             "name": name,
             "start_year": start_date,
@@ -235,10 +238,10 @@ if __name__ == "__main__":
            create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
 
     # Top Tech
-    tickers = ["AAPL", "GOOG", "TSLA", "MSFT", "NVDA", "AMZN", "META"]
+    tickers = ["AAPL", "GOOG", "TSLA", "MSFT", "NVDA", "AMZN", "META", "BAM", "INTC", "QCOM", "ASML", "ACN", "ORCL", "NVS", "UNH"]
     for ticker in tickers:
         if os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/keras":
-            #create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
+            create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
             create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["M2NS"])
         elif os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/scikit-learn":
             create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)

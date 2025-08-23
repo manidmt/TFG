@@ -181,12 +181,15 @@ class ModelExperimentFactory:
         else:
             ticker_list = ticker
 
+        ticker = ticker_list[0]
+
         if len(ticker_list) > 1:
             input_features = "financial.momentum.experiment.modelExperiment.multi_ticker_features"
+            input_ticker = ticker_list
         else:
             input_features = "financial.momentum.experiment.modelExperiment.baseline_features"
-
-        ticker = ticker_list[0]
+            input_ticker = ticker
+        
 
         if mode == "local":
             hyperparameters = {
@@ -210,7 +213,7 @@ class ModelExperimentFactory:
                 "input": {
                     "features": input_features,
                     "horizon": horizon,
-                    "ticker": ticker_list
+                    "ticker": input_ticker
                     #"normalization": { "method": "z-score", "start_index": start_year, "end_index": end_year }
                     },
                 "output": {
