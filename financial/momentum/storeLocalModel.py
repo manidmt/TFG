@@ -135,21 +135,21 @@ def storeLocal_data(ticker,
 
 def store_results(cache_path: str, ticker: str, model_name: str, predictions: pd.Series, slope_series: pd.Series = None, r2_series: pd.Series = None):
 
-    prediction_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}")
+    prediction_path = os.path.join(cache_path, f"model-momentum-{model_name}@preds")
     with open(prediction_path, 'wb') as file:
         pickle.dump(predictions, file)
     
     if slope_series is not None:
         slope_series = slope_series.dropna()
         slope_series = slope_series.copy()
-        slope_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@slope")
+        slope_path = os.path.join(cache_path, f"model-momentum-clenow-{ticker}@slope")
         with open(slope_path, 'wb') as file:
             pickle.dump(slope_series, file)
 
     if r2_series is not None:
         r2_series = r2_series.dropna()
         r2_series = r2_series.copy()
-        r2_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@r2")
+        r2_path = os.path.join(cache_path, f"model-momentum-clenow-{ticker}@r2")
         with open(r2_path, 'wb') as file:
             pickle.dump(r2_series, file)
 

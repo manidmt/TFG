@@ -69,13 +69,13 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
         ticker_str = str(input_descriptor)
 
         slope_wrapper = Wrapper().set_parameters({
-            'ticker': f"model-momentum-{self.model}-{ticker_str}@slope",
-            'default': f"model-momentum-{self.model}-{self.DEFAULT_TICKER}@slope"
+            'ticker': f"model-momentum-{ticker_str}@slope",
+            #'default': f"model-momentum-{self.model}-{self.DEFAULT_TICKER}@slope"
         })
 
         r2_wrapper = Wrapper().set_parameters({
-            'ticker': f"model-momentum-{self.model}-{ticker_str}@r2",
-            'default': f"model-momentum-{self.model}-{self.DEFAULT_TICKER}@r2"
+            'ticker': f"model-momentum-{ticker_str}@r2",
+            #'default': f"model-momentum-{self.model}-{self.DEFAULT_TICKER}@r2"
         })
 
         composite = fd.Product()
