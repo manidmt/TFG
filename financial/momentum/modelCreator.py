@@ -118,11 +118,10 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
 
     # Clenow
     name = f"scikit-learn_clenow_{ticker}_{end_date[:4]}"
-    try:
-        if Model.from_file(name, path=os.environ["MODEL"]):
-            print(f"Modelo {name} ya existe. Saltando...")
+    if os.path.exists(f"{os.environ['MODEL']}/{name}_metrics.json"):
+        print(f"Modelo {name} ya existe. Saltando...")
             # send_telegram_message(f"Modelo {name} ya existe. Saltando...")
-    except FileNotFoundError:
+    else:
         print(f"Modelo {name} no existe. Procediendo a entrenar...")
         send_telegram_message(f"Modelo {name} no existe. Procediendo a entrenar...")
         factory = ExponentialRegressionModelFactory()

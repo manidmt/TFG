@@ -54,12 +54,11 @@ def storeLocal_data(ticker,
                         end_date: str = '2024-12-31',
                         lookahead: int = 20, 
                         horizon: int = 90,
-                        store_slope: bool = False,
-                        store_r2: bool = False):
+                        store_slope: bool = True,
+                        store_r2: bool = True):
     '''
     Computes and stores the momentum (Beta) and R² for a given ticker using FileCache.
     '''
-
     cache_path = os.environ.get("CACHE") + "/" if cache_path is None else cache_path
     # Si no se pasa un DataStore, usar el definido por defecto
     if ds is None:
