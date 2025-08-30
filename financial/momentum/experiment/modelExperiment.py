@@ -13,6 +13,7 @@ from sklearn.metrics import r2_score
 
 from dotenv import load_dotenv
 from financial.momentum.utilities import find_dotenv
+import numpy as np
 
 load_dotenv(dotenv_path=find_dotenv())
 
@@ -38,15 +39,13 @@ class ModelExperiment:
     def reconstruct_absolute_predictions_from_relative(self):
         data = self.datastore.get_data(self.ticker, self.start_year, self.end_year)
 
-        reconstructed_change = - self.predictions
-        reconstructed_final = data / (1-reconstructed_change)
+        reconstructed_final = data/(1+self.predictions)
         return reconstructed_final.shift(self.lookahead).dropna()
 
     def reconstruct_relative_predictions_from_relative_future(self):
         data = self.datastore.get_data(self.ticker, self.start_year, self.end_year)
 
-        reconstructed_change = - self.predictions
-        reconstructed_final = data / (1-reconstructed_change)
+        reconstructed_final = data/(1+self.predictions)
         return reconstructed_final.dropna()
 
 
@@ -108,13 +107,24 @@ class GlobalModelExperiment(ModelExperiment):
 
         self.train = cross_validation.experiment_results['train'][self.ticker]
         self.test = cross_validation.experiment_results['test'][self.ticker]
+
+        oos = cross_validation.oos_series.astype(float).rename(self.ticker)
+        CLIP_LO, CLIP_HI = -0.95, 0.95
+        oos = (
+            oos.replace([np.inf, -np.inf], np.nan)  # <— esto SÍ puede introducir NaN (si había inf)
+            .clip(lower=CLIP_LO, upper=CLIP_HI)  # <— clip satura, no pone NaN
+            .dropna()                            # <— elimina los NaN (por inf/−inf previos)
+        )
+        self.predictions = oos
+        # print("Predicciones:")
+        # print(self.predictions)
             
         final_model = labevaluation.ModelTraining(self.name, self.hyperparameters, self.features, self.target, df, self.model_factory)
         final_model.run()
         self.final_model = final_model.model
 
         #self.predictions = self.reconstruct_relative_predictions_from_zscore(final_model.model.get_data(self.datastore, self.start_year, self.end_year))
-        self.predictions = final_model.model.get_data(self.datastore, self.start_year, self.end_year)
+        #self.predictions = final_model.model.get_data(self.datastore, self.start_year, self.end_year)
 
     def reconstruct_relative_predictions_from_zscore(self, predictions):
 
