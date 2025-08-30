@@ -96,7 +96,7 @@ def create_keras_model(ticker, datastore, start_date, end_date, lookahead, horiz
             experiment = ModelExperimentFactory.create_experiment(config)
             experiment.run()
             preds = experiment.reconstruct_absolute_predictions_from_relative()
-            store_results(ticker, name, preds, os.environ["CACHE"], os.environ["MODEL"])
+            store_results(ticker, name, preds, experiment.predictions, os.environ["CACHE"], os.environ["MODEL"])
             send_telegram_message("Resultados guardados")
             metrics(experiment, preds, target, os.environ["MODEL"])
             send_telegram_message("Metricas guardadas")
@@ -140,7 +140,7 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
             experiment = ModelExperimentFactory.create_experiment(config)
             experiment.run()
             preds = experiment.reconstruct_absolute_predictions_from_relative()
-            store_results(ticker, name, preds, os.environ["CACHE"], os.environ["MODEL"])
+            store_results(ticker, name, preds, experiment.predictions, os.environ["CACHE"], os.environ["MODEL"])
             send_telegram_message("Resultados guardados")
             metrics(experiment, preds, target, os.environ["MODEL"], global_model=False)
             send_telegram_message("Metricas guardadas")
@@ -174,7 +174,7 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
             print(experiment)
             experiment.run()
             preds = experiment.reconstruct_absolute_predictions_from_relative()
-            store_results(ticker, name, preds, os.environ["CACHE"], os.environ["MODEL"])
+            store_results(ticker, name, preds, experiment.predictions, os.environ["CACHE"], os.environ["MODEL"])
             send_telegram_message("Resultados guardados")
             metrics(experiment, preds, target, os.environ["MODEL"])
             send_telegram_message("Metricas guardadas")
@@ -208,7 +208,7 @@ def create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, hor
             experiment = ModelExperimentFactory.create_experiment(config)
             experiment.run()
             preds = experiment.reconstruct_absolute_predictions_from_relative()
-            store_results(ticker, name, preds, os.environ["CACHE"], os.environ["MODEL"])
+            store_results(ticker, name, preds, experiment.predictions, os.environ["CACHE"], os.environ["MODEL"])
             send_telegram_message("Resultados guardados")
             metrics(experiment, preds, target, os.environ["MODEL"])
             send_telegram_message("Metricas guardadas")
@@ -226,21 +226,23 @@ if __name__ == "__main__":
     lookahead = 20
     horizon = 90
 
-    # ETFs
-    tickers = ["QQQ", "SPY", "URTH", "IYY", "EIMI"]
-    print(os.environ["MODEL"])
-    for ticker in tickers:
-       if os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/keras":
-           #create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-           create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["M2NS"])
-       elif os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/scikit-learn":
-           create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-
-    # Top Tech
-    tickers = ["AAPL", "GOOG", "TSLA", "MSFT", "NVDA", "AMZN", "META", "BAM", "INTC", "QCOM", "ASML", "ACN", "ORCL", "NVS", "UNH"]
+    # Top
+    tickers = ["AAPL", "GOOG", "TSLA", "MSFT", "NVDA", "AMZN", "META", "INTC", "QCOM", "ASML", "ACN", "ORCL", "NVS", "UNH"]
     for ticker in tickers:
         if os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/keras":
             create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
             create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["M2NS"])
         elif os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/scikit-learn":
             create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
+
+    # ETFs
+    tickers = ["QQQ", "SPY", "URTH", "IYY", "EIMI"]
+    print(os.environ["MODEL"])
+    for ticker in tickers:
+       if os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/keras":
+           create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
+           create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["M2NS"])
+       elif os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/scikit-learn":
+           create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
+
+    
