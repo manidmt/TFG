@@ -158,13 +158,16 @@ def reset_gpu():
 
 import pickle
 
-def store_results(ticker: str, model_name: str, predictions: pd.Series, cache_path: str, model_path: str):
+def store_results(ticker: str, model_name: str, predictions: pd.Series, predictions_rel: pd.Series, cache_path: str, model_path: str):
 
-    base_name = f"model-momentum-{model_name}@pred"
+    for prefix in ["keras_", "scikit-learn_"]:
+        rel_model_name = model_name.removeprefix(prefix)
+        
+    base_name = f"model-momentum-{rel_model_name}@pred" 
 
     # Guardar .pkl para Wrapper
     with open(os.path.join(cache_path, base_name), "wb") as f:
-        pickle.dump(predictions, f)
+        pickle.dump(predictions_rel, f)
     print("Prediciones guardadas pickle")
     # Guardar .csv para inspección y web
     predictions.to_csv(os.path.join(model_path, model_name + "_preds.csv"))
