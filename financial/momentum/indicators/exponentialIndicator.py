@@ -20,7 +20,7 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
     DEFAULT_HORIZON = 90
     DEFAULT_TICKER = '^GSPC'
     
-    def __init__(self, model='exponential'):
+    def __init__(self, model='clenow'):
         self.lookahead = ExponentialRegressionIndicator.DEFAULT_LOOKAHEAD   # Predicción a 20 días                          | Clenow
         self.horizon = ExponentialRegressionIndicator.DEFAULT_HORIZON       # Ventana de 90 días para entrenar el modelo    | Clenow
         self.model = model
@@ -52,7 +52,7 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
         try:
             self.model = parameters['model']
         except KeyError:
-            self.model = 'exponential'
+            self.model = 'clenow'
 
         return self
 
@@ -69,12 +69,12 @@ class ExponentialRegressionIndicator(TechnicalIndicator):
         ticker_str = str(input_descriptor)
 
         slope_wrapper = Wrapper().set_parameters({
-            'ticker': f"model-momentum-{ticker_str}@slope",
+            'ticker': f"model-momentum-clenow-{ticker_str}@slope",
             #'default': f"model-momentum-{self.model}-{self.DEFAULT_TICKER}@slope"
         })
 
         r2_wrapper = Wrapper().set_parameters({
-            'ticker': f"model-momentum-{ticker_str}@r2",
+            'ticker': f"model-momentum-clenow-{ticker_str}@r2",
             #'default': f"model-momentum-{self.model}-{self.DEFAULT_TICKER}@r2"
         })
 
