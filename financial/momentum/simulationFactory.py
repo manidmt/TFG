@@ -94,7 +94,7 @@ class SimulationFactory:
 
     def statistics(self, returns):
         start_date = f"{self.start_year}-01-01"
-        end_date = f"{self.end_year}-06-30" if self.end_year == 2025 else f"{self.end_year}-12-31"
+        end_date = f"{self.end_year}-04-30" if self.end_year == 2025 else f"{self.end_year}-12-31"
 
         statistics = {
              # "average_monthly_rotation": 100*simulation.monthly_rotation(),
