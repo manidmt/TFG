@@ -8,7 +8,7 @@ from financial.strategies.technical.indicator import TechnicalIndicator
 from financial.data import Variable
 
 
-class ModelIndicator(TechnicalIndicator):
+class SKModelIndicator(TechnicalIndicator):
 
     def __init__(self, model):
         self.model = model

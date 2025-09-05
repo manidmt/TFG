@@ -36,7 +36,7 @@ def create_keras_model(ticker, datastore, start_date, end_date, lookahead, horiz
     data = datastore.get_data(ticker, start_date, end_date)
     target = data[lookahead + horizon:]
     factory = KerasAdvancedModelFactory()
-    architectures = ["rnn","lstm", "cnn", "cnn2d", "transformer"]
+    architectures = ["rnn","lstm", "cnn", "transformer"]
     layers = [64, 32]
     activation = {"hidden": "relu", "output": "linear"}
     batch_size = 16
@@ -231,7 +231,8 @@ if __name__ == "__main__":
     for ticker in tickers:
         if os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/keras":
             create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-            create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["M2NS"])
+            #create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["M2NS"])
+            #create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["^IXIC"])
         elif os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/scikit-learn":
             create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
 
@@ -241,7 +242,7 @@ if __name__ == "__main__":
     for ticker in tickers:
        if os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/keras":
            create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon)
-           create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["M2NS"])
+           #create_keras_model(ticker, datastore, start_date, end_date, lookahead, horizon, extra_tickers=["M2NS"])
        elif os.environ["MODEL"] == "/home/manidmt/TFG/OTRI/models/scikit-learn":
            create_sklearn_model(ticker, datastore, start_date, end_date, lookahead, horizon)
 
