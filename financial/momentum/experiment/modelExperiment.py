@@ -111,9 +111,9 @@ class GlobalModelExperiment(ModelExperiment):
         oos = cross_validation.oos_series.astype(float).rename(self.ticker)
         CLIP_LO, CLIP_HI = -0.95, 0.95
         oos = (
-            oos.replace([np.inf, -np.inf], np.nan)  # <— esto SÍ puede introducir NaN (si había inf)
-            .clip(lower=CLIP_LO, upper=CLIP_HI)  # <— clip satura, no pone NaN
-            .dropna()                            # <— elimina los NaN (por inf/−inf previos)
+            oos.replace([np.inf, -np.inf], np.nan)  
+            .clip(lower=CLIP_LO, upper=CLIP_HI)  
+            .dropna()                            
         )
         self.predictions = oos
         # print("Predicciones:")
