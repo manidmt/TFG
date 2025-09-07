@@ -15,7 +15,7 @@ from financial.momentum.models.kerasAdvanced import KerasAdvancedModelFactory
 
 from financial.momentum.tuning.oosTools import quick_oos_metrics
 from financial.momentum.tuning.oosTools import OOSMomentumEvaluator
-from financial.momentum.tuning.hyperSpaces import build_cnn_space
+from financial.momentum.tuning.hyperSpaces import build_transformer_space
 
 
 if __name__ == "__main__":
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     end_date   = "2025-06-30"   # hasta mediados de 2025
     lookahead  = 20
     horizon    = 90
-    trials     = 30
+    trials     = 20
 
     out_dir = os.path.join(os.environ["MODEL"], "tuning")
     os.makedirs(out_dir, exist_ok=True)
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     )
 
     # --------- Espacio + Evaluador ----------
-    space = build_cnn_space()
+    space = build_transformer_space()
     evaluator = OOSMomentumEvaluator(
         ds=ds, ticker=ticker,
         start=start_date, end=end_date,
@@ -71,7 +71,7 @@ if __name__ == "__main__":
         })
 
     df = pd.DataFrame(rows)
-    trials_path = os.path.join(out_dir, f"random_{ticker}_trials_random.csv")
+    trials_path = os.path.join(out_dir, f"random_{ticker}_trials_transformer.csv")
     df.to_csv(trials_path, index=False)
     print(f"[OK] Trials guardados → {trials_path}")
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         best_val   = best_block["value"]
         best_merged = space.parameters(best_sel)
 
-        best_path = os.path.join(out_dir, f"random_{ticker}_best_{metric_name}_random.json")
+        best_path = os.path.join(out_dir, f"random_{ticker}_best_{metric_name}_transformer.json")
         with open(best_path, "w") as f:
             json.dump({
                 "metric": metric_name,
