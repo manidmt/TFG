@@ -113,33 +113,83 @@ class RecurrentModel(KerasModel):
         Returns:
             keras.Model: The initialized Keras model.
         """
-        layers = self.hyperparameters["topology"]["layers"]
-        # activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
-        activation_output = self.hyperparameters["topology"]["activation"]["output"]
-        horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size()  // horizon # For each ticker we have horizon values, we need to divide by horizon to get the number of tickers
-        #print(self.sources, n_features)
+        # layers = self.hyperparameters["topology"]["layers"]
+        # # activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
+        # activation_output = self.hyperparameters["topology"]["activation"]["output"]
+        # horizon = self.hyperparameters["input"]["horizon"]
+        # n_features = self.sources.size()  // horizon # For each ticker we have horizon values, we need to divide by horizon to get the number of tickers
+        # #print(self.sources, n_features)
+
+        # model = keras.models.Sequential()
+        # model.add(keras.layers.Input(shape=(horizon, n_features)))
+
+        # if self.architecture == "lstm":
+        #     for units in layers[:-1]:
+        #         model.add(keras.layers.LSTM(units, return_sequences=True))
+
+        #     model.add(keras.layers.LSTM(layers[-1]))
+
+        # elif self.architecture == "rnn":
+        #     for units in layers[:-1]:
+        #         model.add(keras.layers.SimpleRNN(units, return_sequences=True))
+
+        #     model.add(keras.layers.SimpleRNN(layers[-1]))
+
+        # else:
+        #     raise ValueError(f"Unsupported recurrent architecture: {self.architecture}")
+        
+        # model.add(keras.layers.Dense(1, activation=activation_output))
+
+        layers_cfg = self.hyperparameters["topology"]["layers"]
+        act_hidden = self.hyperparameters["topology"]["activation"].get("hidden", "relu")
+        act_out    = self.hyperparameters["topology"]["activation"]["output"]
+
+        horizon    = self.hyperparameters["input"]["horizon"]
+        n_features = self.sources.size() // horizon
+
+        mcfg = self.hyperparameters.get("model", {})
+        rnn_dropout          = float(mcfg.get("dropout", 0.0))
+        rnn_recurrent_drop   = float(mcfg.get("recurrent_dropout", 0.0))
+        batch_norm           = bool(mcfg.get("batch_norm", False))
+        bidirectional        = bool(mcfg.get("bidirectional", False))
+        layer_dropout        = float(mcfg.get("layer_dropout", 0.0))
+        dense_head           = list(mcfg.get("dense_head", []))
+
+        RNNLayer = keras.layers.LSTM if self.architecture == "lstm" else keras.layers.SimpleRNN
 
         model = keras.models.Sequential()
         model.add(keras.layers.Input(shape=(horizon, n_features)))
 
-        if self.architecture == "lstm":
-            for units in layers[:-1]:
-                model.add(keras.layers.LSTM(units, return_sequences=True))
+        # Capas recurrentes
+        for i, units in enumerate(layers_cfg):
+            return_seq = (i < len(layers_cfg) - 1)
+            rnn = RNNLayer(
+                units,
+                return_sequences=return_seq,
+                dropout=rnn_dropout,
+                recurrent_dropout=rnn_recurrent_drop
+            )
+            if bidirectional:
+                rnn = keras.layers.Bidirectional(rnn)
 
-            model.add(keras.layers.LSTM(layers[-1]))
+            model.add(rnn)
 
-        elif self.architecture == "rnn":
-            for units in layers[:-1]:
-                model.add(keras.layers.SimpleRNN(units, return_sequences=True))
+            if batch_norm:
+                model.add(keras.layers.BatchNormalization())
 
-            model.add(keras.layers.SimpleRNN(layers[-1]))
+            if layer_dropout > 0.0:
+                model.add(keras.layers.Dropout(layer_dropout))
 
-        else:
-            raise ValueError(f"Unsupported recurrent architecture: {self.architecture}")
-        
-        model.add(keras.layers.Dense(1, activation=activation_output))
+        # Cabeza densa opcional
+        for units in dense_head:
+            model.add(keras.layers.Dense(units, activation=act_hidden))
+            if batch_norm:
+                model.add(keras.layers.BatchNormalization())
+            if layer_dropout > 0.0:
+                model.add(keras.layers.Dropout(layer_dropout))
 
+        # Salida
+        model.add(keras.layers.Dense(1, activation=act_out))
         return model
  
 
@@ -239,50 +289,82 @@ class ConvolutionalModel(KerasModel):
         horizon = self.hyperparameters["input"]["horizon"]
         n_features = self.sources.size() // horizon # For each ticker we have horizon values, we need to divide by horizon to get the number of tickers
 
-        model = keras.models.Sequential()
+        # model = keras.models.Sequential()
 
-        if self.architecture == "cnn":
-            model.add(keras.layers.Input(shape=(horizon, n_features)))
-            model.add(keras.layers.Conv1D(filters=layers[0], kernel_size=horizon, activation=activation_hidden, padding='valid'))
-
-            model.add(keras.layers.Flatten())
-
-            for units in layers[1:]:
-                model.add(keras.layers.Dense(units, activation=activation_hidden))
-
-
-            model.add(keras.layers.Dense(1, activation=activation_output))
-            
         # if self.architecture == "cnn":
         #     model.add(keras.layers.Input(shape=(horizon, n_features)))
-        #     for units in layers:
-        #         model.add(keras.layers.Conv1D(filters=units, kernel_size=horizon, activation=activation_hidden, padding='same'))
-        #         model.add(keras.layers.MaxPooling1D(pool_size=2))
+        #     model.add(keras.layers.Conv1D(filters=layers[0], kernel_size=horizon, activation=activation_hidden, padding='valid'))
+
         #     model.add(keras.layers.Flatten())
+
+        #     for units in layers[1:]:
+        #         model.add(keras.layers.Dense(units, activation=activation_hidden))
+
+
         #     model.add(keras.layers.Dense(1, activation=activation_output))
 
-        elif self.architecture == "cnn2d":
-            model.add(keras.layers.Input(shape=(horizon, n_features, 1)))
-            model.add(keras.layers.Conv2D(filters=layers[0], kernel_size=(horizon, n_features), activation=activation_hidden, padding='valid'))
-
-            model.add(keras.layers.Flatten())
-            for units in layers[1:]:
-                model.add(keras.layers.Dense(units, activation=activation_hidden))
-
-
-            model.add(keras.layers.Dense(1, activation=activation_output))
-
-        # elif self.architecture == "cnn2d":
-        #     model.add(keras.layers.Input(shape=(horizon, n_features, 1)))
-        #     for units in layers:
-        #         model.add(keras.layers.Conv2D(filters=units, kernel_size=(horizon, n_features), activation=activation_hidden, padding='same'))
-        #         model.add(keras.layers.MaxPooling2D(pool_size=(2, 1)))
-        #     model.add(keras.layers.Flatten())
-        #     model.add(keras.layers.Dense(1, activation=activation_output))
-
-        else:
-            raise ValueError(f"Unsupported CNN architecture: {self.architecture}")
+        if self.architecture != "cnn":
+            raise ValueError(f"Unsupported architecture: {self.architecture}")
     
+        hp = self.hyperparameters.get("model", {})
+        n_blocks     = hp.get("n_blocks", 2)
+        filters      = hp.get("filters", [64, 64])              # o un int
+        kernel_sizes = hp.get("kernel_sizes", [5, 3])           # o un int
+        dilations    = hp.get("dilations", 1)                   # int o lista
+        padding      = hp.get("padding", "same")                # "same" recomendado
+        pool_every   = hp.get("pool_every", 1)                  # p.ej. cada bloque
+        pool_size    = hp.get("pool_size", 2)
+        dropout      = hp.get("dropout", 0.0)
+        l2_reg       = hp.get("l2", 0.0)
+        use_bn       = hp.get("batch_norm", True)
+        global_pool  = hp.get("global_pool", True)
+
+        # normaliza a listas
+        def as_list(v, length):
+            if isinstance(v, (list, tuple)):
+                return list(v) if len(v) == length else [v]*length
+            return [v]*length
+
+        filters      = as_list(filters, n_blocks)
+        kernel_sizes = as_list(kernel_sizes, n_blocks)
+        dilations    = as_list(dilations, n_blocks)
+
+        reg = keras.regularizers.l2(l2_reg) if l2_reg and l2_reg > 0 else None
+
+        x = keras.layers.Input(shape=(horizon, n_features))
+        y = x
+
+        for b in range(n_blocks):
+            y = keras.layers.Conv1D(
+                filters=filters[b],
+                kernel_size=kernel_sizes[b],
+                padding=padding,           # "same" evita colapsar el eje temporal
+                activation=None,           # activa después de BN/Dropout
+                dilation_rate=dilations[b],
+                kernel_regularizer=reg,
+            )(y)
+            if use_bn:
+                y = keras.layers.BatchNormalization()(y)
+            y = keras.layers.Activation(activation_hidden)(y)
+
+            if (b + 1) % pool_every == 0:
+                y = keras.layers.MaxPooling1D(pool_size=pool_size)(y)
+
+            if dropout and dropout > 0:
+                y = keras.layers.Dropout(dropout)(y)
+
+        if global_pool:
+            y = keras.layers.GlobalAveragePooling1D()(y)
+        else:
+            y = keras.layers.Flatten()(y)
+
+        for units in layers:
+            y = keras.layers.Dense(units, activation=activation_hidden, kernel_regularizer=reg)(y)
+            if dropout and dropout > 0:
+                y = keras.layers.Dropout(dropout)(y)
+
+        out = keras.layers.Dense(1, activation=activation_output)(y)
+        model = keras.Model(inputs=x, outputs=out)
         return model
 
 import tensorflow as tf
@@ -373,36 +455,90 @@ class TransformerModel(KerasModel):
         Initialize the Keras model based on the specified architecture.
         """
 
-        horizon = self.hyperparameters["input"]["horizon"]
-        n_features = self.sources.size() // horizon # For each ticker we have horizon values, we need to divide by horizon to get the number of tickers
-        num_heads = self.hyperparameters["model"].get("num_heads", 2)
-        ff_dim = self.hyperparameters["model"].get("ff_dim", 64)
-        dropout_rate = self.hyperparameters["model"].get("dropout", 0.1)
-        activation_output = self.hyperparameters["topology"]["activation"]["output"]
+        # horizon = self.hyperparameters["input"]["horizon"]
+        # n_features = self.sources.size() // horizon # For each ticker we have horizon values, we need to divide by horizon to get the number of tickers
+        # num_heads = self.hyperparameters["model"].get("num_heads", 2)
+        # ff_dim = self.hyperparameters["model"].get("ff_dim", 64)
+        # dropout_rate = self.hyperparameters["model"].get("dropout", 0.1)
+        # activation_output = self.hyperparameters["topology"]["activation"]["output"]
+
+        # inputs = keras.Input(shape=(horizon, n_features))
+
+        # # Self-attention
+        # x = keras.layers.LayerNormalization()(inputs)
+        # attn_output = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=16)(x, x)
+        # x = keras.layers.Add()([x, attn_output])
+        # x = keras.layers.Dropout(dropout_rate)(x)
+        
+        # # Feedforward
+        # x2 = keras.layers.LayerNormalization()(x)
+        # x2 = keras.layers.Dense(ff_dim, activation="relu")(x2)
+        # x2 = keras.layers.Dense(ff_dim)(x2)
+        # x = keras.layers.Dense(ff_dim)(x)
+        # x = keras.layers.Add()([x, x2])         
+        # x = keras.layers.Dropout(dropout_rate)(x)
+        
+        # # Output
+        # x = keras.layers.Flatten()(x)
+        # outputs = keras.layers.Dense(1, activation=activation_output)(x)
+
+        # model = keras.Model(inputs=inputs, outputs=outputs)
+        # return model
+        horizon    = self.hyperparameters["input"]["horizon"]
+        n_features = self.sources.size() // horizon
+
+        act_hidden = self.hyperparameters["topology"]["activation"].get("hidden", "relu")
+        act_out    = self.hyperparameters["topology"]["activation"]["output"]
+
+        mcfg = self.hyperparameters.get("model", {})
+        n_blocks   = int(mcfg.get("n_blocks", 1))
+        num_heads  = int(mcfg.get("num_heads", 2))
+        key_dim    = int(mcfg.get("key_dim", 16))
+        ff_dim     = int(mcfg.get("ff_dim", 64))
+        dropout    = float(mcfg.get("dropout", 0.1))
+        causal     = bool(mcfg.get("causal", True))
+        global_pool = bool(mcfg.get("global_pool", True))
+        dense_head  = list(mcfg.get("dense_head", []))
 
         inputs = keras.Input(shape=(horizon, n_features))
+        x = inputs
 
-        # Self-attention
-        x = keras.layers.LayerNormalization()(inputs)
-        attn_output = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=16)(x, x)
-        x = keras.layers.Add()([x, attn_output])
-        x = keras.layers.Dropout(dropout_rate)(x)
-        
-        # Feedforward
-        x2 = keras.layers.LayerNormalization()(x)
-        x2 = keras.layers.Dense(ff_dim, activation="relu")(x2)
-        x2 = keras.layers.Dense(ff_dim)(x2)
-        x = keras.layers.Dense(ff_dim)(x)
-        x = keras.layers.Add()([x, x2])         
-        x = keras.layers.Dropout(dropout_rate)(x)
-        
-        # Output
-        x = keras.layers.Flatten()(x)
-        outputs = keras.layers.Dense(1, activation=activation_output)(x)
+        # (opcional) proyección a una dimensión de trabajo
+        proj_dim = mcfg.get("project_dim", None)
+        if proj_dim is not None:
+            x = keras.layers.Dense(int(proj_dim))(x)
 
+        # Bloques encoder
+        for _ in range(n_blocks):
+            # Pre-Norm + MultiHeadAttention
+            y = keras.layers.LayerNormalization()(x)
+            attn = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dim)(
+                y, y, use_causal_mask=causal
+            )
+            y = keras.layers.Dropout(dropout)(attn)
+            x = keras.layers.Add()([x, y])
+
+            # Pre-Norm + Feed-Forward
+            y = keras.layers.LayerNormalization()(x)
+            y = keras.layers.Dense(ff_dim, activation="relu")(y)
+            y = keras.layers.Dropout(dropout)(y)
+            y = keras.layers.Dense(x.shape[-1])(y)
+            x = keras.layers.Add()([x, y])
+
+        # Pooling / Flatten
+        if global_pool:
+            x = keras.layers.GlobalAveragePooling1D()(x)
+        else:
+            x = keras.layers.Flatten()(x)
+
+        # Cabeza densa opcional
+        for units in dense_head:
+            x = keras.layers.Dense(units, activation=act_hidden)(x)
+            x = keras.layers.Dropout(dropout)(x)  # usa el mismo dropout del bloque
+
+        outputs = keras.layers.Dense(1, activation=act_out)(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
-
 
 
 
