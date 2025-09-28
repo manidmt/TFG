@@ -1,7 +1,6 @@
 '''
 Hyperparameters optimizator for KerasAdvanced models with ticker SP500.
 
-
 @author: Manuel Díaz-Meco (manidmt5@gmail.com)
 '''
 

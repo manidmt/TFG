@@ -5,6 +5,8 @@
 
 import numpy as np
 import pandas as pd
+from copy import deepcopy
+import json
 from financial.lab.evaluation import ModelEvaluator
 from financial.momentum.experiment.modelExperiment import ModelExperimentFactory
 from financial.momentum.models.kerasAdvanced import KerasAdvancedModelFactory
@@ -12,16 +14,13 @@ from financial.momentum.models.kerasAdvanced import KerasAdvancedModelFactory
 
 def quick_oos_metrics(ds, ticker, pred_oos, lookahead, start, end):
     """
-    pred_oos: Serie OOS (ŷ_t) que predice el retorno relativo futuro a L días vista en t.
-    Métricas OOS contra y_t = (P_{t+L}-P_t)/P_t, sin reconstruir precios.
     """
     P = ds.get_data(ticker, start, end).astype(float)
     df = pd.DataFrame({"P": P, "pred": pred_oos}).dropna()
     L = lookahead
 
-    # y_true = retorno futuro
     df["y_true"] = (df["P"].shift(-L) - df["P"]) / df["P"]
-    df = df.dropna()                        # alinea con pred
+    df = df.dropna()                        
 
     err  = df["pred"] - df["y_true"]
     mae  = err.abs().mean()
@@ -40,29 +39,38 @@ def quick_oos_metrics(ds, ticker, pred_oos, lookahead, start, end):
     }
 
 
-# Objeto compatible con .metric() que espera el optimizador de Fernando
 class OOSResult:
     def __init__(self, metrics_dict: dict):
         self.m = metrics_dict  # {"MAE":..., "RMSE":..., "R2":..., "corr":..., "hit_rate":...}
     def metric(self, k: str):
-        # Si el nombre empieza por "-", lo tratamos como métrica a minimizar
+        # - means "minimize", no - means "maximize"
         return -float(self.m[k[1:]]) if k.startswith("-") else float(self.m[k])
     def __str__(self):
         return f"OOSResult({self.m})"
 
 class OOSMomentumEvaluator(ModelEvaluator):
     """
-    Entrena con tu GlobalModelExperiment y devuelve métricas OOS
-    sobre la serie concatenada (sin fugas temporales).
     """
-    def __init__(self, ds, ticker, start, end, lookahead, horizon, quick_oos_metrics_fn):
+    def __init__(self, ds, ticker, start, end, lookahead, horizon, quick_oos_metrics_fn, default_architecture):
         self.ds, self.ticker = ds, ticker
         self.start, self.end = start, end
         self.lookahead, self.horizon = lookahead, horizon
         self.quick = quick_oos_metrics_fn
         self.factory = KerasAdvancedModelFactory()
+        self.default_architecture = default_architecture
 
     def evaluate_model(self, experiment_id: str, hyperparams_merged: dict):
+        print("[DBG] config_selection merged model dict:", hyperparams_merged.get("model", {}))
+
+        hp = deepcopy(hyperparams_merged)      # no mutar el original
+        hp.setdefault("model", {})
+        arch = hp["model"].get("architecture") or getattr(self, "default_architecture", None)
+        if not arch:
+            raise ValueError("No model.architecture given in hyperparams or default.")
+        hp["model"]["architecture"] = arch
+
+        print("[DBG] hp(model) ->", json.dumps(hp.get("model", {}), indent=2))
+
         config = {
             "mode": "global",
             "datastore": self.ds,
@@ -73,13 +81,12 @@ class OOSMomentumEvaluator(ModelEvaluator):
             "end_year":   self.end,
             "lookahead":  self.lookahead,
             "horizon":    self.horizon,
-            "model_params": hyperparams_merged,
+            "model_params": hp
         }
 
         exp = ModelExperimentFactory.create_experiment(config)
         exp.run()
 
-        # Tu Walk-Forward ya deja exp.predictions = serie OOS concatenada
         yhat_oos = pd.Series(exp.predictions, name="pred").astype(float)
 
         m = self.quick(self.ds, self.ticker, yhat_oos,
@@ -89,5 +96,4 @@ class OOSMomentumEvaluator(ModelEvaluator):
         self.last_metrics    = m
         self.last_config     = hyperparams_merged
 
-        # Devuelve (model, evaluation). El optimizador usa evaluation["oos"].metric(...)
         return (None, {"oos": OOSResult(m)})
