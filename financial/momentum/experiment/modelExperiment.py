@@ -5,11 +5,11 @@ Testing Factorys/Models
 '''
 
 import os
+from copy import deepcopy
 import financial.data as fd
 import financial.momentum.storeLocalModel as  sLM
 import financial.lab.evaluation as labevaluation
 import financial.lab.data as labdata
-from sklearn.metrics import r2_score
 
 from dotenv import load_dotenv
 from financial.momentum.utilities import find_dotenv
@@ -92,6 +92,8 @@ class GlobalModelExperiment(ModelExperiment):
 
         # print(df.columns)
 
+        print(f"Hyperparameters: {self.hyperparameters}")
+
         cross_validation = labevaluation.WalkForwardCrossValidation ( self.name, 
                                                                     self.hyperparameters, 
                                                                     self.features, 
@@ -152,7 +154,6 @@ def baseline_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
 
 def multi_ticker_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
     """
-    Define los tickers que se usarán como features de entrada para modelos multivariados.
     """
     tickers = hyperparameters["input"]["ticker"]
     if isinstance(tickers, str):
@@ -166,6 +167,25 @@ def multi_ticker_features(ds: fd.DataStore, hyperparameters: dict) -> fd.Set:
     return features
 
 
+
+def _normalize_model_params(model_params: dict) -> dict:
+    """
+    """
+    mp = deepcopy(model_params) if isinstance(model_params, dict) else {}
+
+    core = mp.get("model", mp)
+
+    topology     = core.pop("topology",     None)
+    optimization = core.pop("optimization", None)
+
+    normalized = {}
+    if topology is not None:
+        normalized["topology"] = topology
+    if optimization is not None:
+        normalized["optimization"] = optimization
+    normalized["model"] = core
+
+    return normalized
 
 class ModelExperimentFactory:
     
@@ -219,6 +239,9 @@ class ModelExperimentFactory:
             return LocalModelExperiment(datastore, ticker, model_factory, name, start_year, end_year, hyperparameters,lookahead, horizon)
 
         elif mode == "global":
+
+            norm = _normalize_model_params(model_params)
+
             hyperparameters = {
                 "input": {
                     "features": input_features,
@@ -232,7 +255,8 @@ class ModelExperimentFactory:
                     "prediction": "relative"
                     #"normalization": { "method": "z-score", "start_index": start_year, "end_index": end_year }
                     },
-                "model": model_params,
+                #"model": model_params,
+                **norm
             }
             return GlobalModelExperiment(datastore, ticker, model_factory, name, start_year, end_year, hyperparameters, lookahead, horizon)
 
