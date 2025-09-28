@@ -11,7 +11,6 @@ from financial.model import KerasModel
 import financial.data as fd
 from financial.lab.models import ModelFactory
 import financial.data as fd
-from keras.callbacks import LambdaCallback
     
 class RecurrentModel(KerasModel):
     """
@@ -140,6 +139,7 @@ class RecurrentModel(KerasModel):
         
         # model.add(keras.layers.Dense(1, activation=activation_output))
 
+        print("\n\n\nlstm/rnn\n\n\n\n")
         layers_cfg = self.hyperparameters["topology"]["layers"]
         act_hidden = self.hyperparameters["topology"]["activation"].get("hidden", "relu")
         act_out    = self.hyperparameters["topology"]["activation"]["output"]
@@ -346,9 +346,9 @@ class ConvolutionalModel(KerasModel):
             if use_bn:
                 y = keras.layers.BatchNormalization()(y)
             y = keras.layers.Activation(activation_hidden)(y)
-
-            if (b + 1) % pool_every == 0:
-                y = keras.layers.MaxPooling1D(pool_size=pool_size)(y)
+            if isinstance(pool_every, int) and pool_every > 0 and (b + 1) % pool_every == 0:
+                ps = int(pool_size) if (isinstance(pool_size, int) and pool_size > 1) else 2
+                y = keras.layers.MaxPooling1D(pool_size=ps)(y)
 
             if dropout and dropout > 0:
                 y = keras.layers.Dropout(dropout)(y)
@@ -367,7 +367,6 @@ class ConvolutionalModel(KerasModel):
         model = keras.Model(inputs=x, outputs=out)
         return model
 
-import tensorflow as tf
 
 class TransformerModel(KerasModel):
     """
@@ -557,6 +556,7 @@ class KerasAdvancedModelFactory(ModelFactory):
                                       hyperparameters: dict, 
                                       input_descriptor: fd.DataDescriptor, 
                                       output_descriptor: fd.DataDescriptor):
+        print(f"[KerasAdvancedModelFactory] Creating model '{model_id}' with architecture '{hyperparameters.get('model', {}).get('architecture', '')}'")
         self.architecture = hyperparameters.get("model", {}).get("architecture", {})
         if self.architecture in ["rnn", "lstm"]:
             return RecurrentModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
@@ -565,7 +565,9 @@ class KerasAdvancedModelFactory(ModelFactory):
         elif self.architecture == "transformer":
             return TransformerModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
         else:
-            return KerasModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
+            print(f"[ERROR] Unknown architecture for KerasAdvancedModelFactory: {self.architecture}")
+            return None
+            #return KerasModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
 
 
 # class KerasAdvancedModelFactory2(ModelFactory):
