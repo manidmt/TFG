@@ -139,7 +139,7 @@ class RecurrentModel(KerasModel):
         
         # model.add(keras.layers.Dense(1, activation=activation_output))
 
-        print("\n\n\nlstm/rnn\n\n\n\n")
+        # print("\n\n\nlstm/rnn\n\n\n\n")
         layers_cfg = self.hyperparameters["topology"]["layers"]
         act_hidden = self.hyperparameters["topology"]["activation"].get("hidden", "relu")
         act_out    = self.hyperparameters["topology"]["activation"]["output"]
