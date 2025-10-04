@@ -10,7 +10,7 @@ import json
 from financial.lab.evaluation import ModelEvaluator
 from financial.momentum.experiment.modelExperiment import ModelExperimentFactory
 from financial.momentum.models.kerasAdvanced import KerasAdvancedModelFactory
-
+from financial.momentum.utilities import send_telegram_message
 
 def quick_oos_metrics(ds, ticker, pred_oos, lookahead, start, end):
     """
@@ -62,7 +62,7 @@ class OOSMomentumEvaluator(ModelEvaluator):
     def evaluate_model(self, experiment_id: str, hyperparams_merged: dict):
         print("[DBG] config_selection merged model dict:", hyperparams_merged.get("model", {}))
 
-        hp = deepcopy(hyperparams_merged)      # no mutar el original
+        hp = deepcopy(hyperparams_merged)
         hp.setdefault("model", {})
         arch = hp["model"].get("architecture") or getattr(self, "default_architecture", None)
         if not arch:
@@ -95,5 +95,5 @@ class OOSMomentumEvaluator(ModelEvaluator):
         self.last_oos_series = yhat_oos
         self.last_metrics    = m
         self.last_config     = hyperparams_merged
-
+        send_telegram_message(f"Model runned: {experiment_id}")
         return (None, {"oos": OOSResult(m)})

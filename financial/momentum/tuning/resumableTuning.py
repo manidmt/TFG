@@ -179,27 +179,21 @@ class ResumableBayesianOptimizer(BayesianOptimizer):
 
     def next(self) -> dict:
         """
-        Igual que la lógica del padre, pero saltando configs repetidas.
         """
-        # 1) inicial: puntos aleatorios
         if self.total_trials() < self.minimum_initial_points():
             for _ in range(500):
                 sel = self.space.random()
                 cid = _config_id(self.space, sel)
                 if cid not in getattr(self, "done_ids", set()):
                     return sel
-            raise RuntimeError("No quedan combinaciones nuevas para la fase inicial.")
+            raise RuntimeError("No new combinations left for the initial phase.")
 
-        # 2) explotación: propuestas del GP (evitando duplicados)
         for _ in range(500):
-            sel = self.estimator.propose(self.trials)  # devuelve un dict de selección
-            # Si el estimator devuelve un "params merged", lo convertimos a selección;
-            # En nuestro caso, propone selección (claves del space)
+            sel = self.estimator.propose(self.trials)
             cid = _config_id(self.space, sel)
             if cid not in getattr(self, "done_ids", set()):
                 return sel
 
-        # 3) fallback: aleatorio sin repetir
         for _ in range(500):
             sel = self.space.random()
             cid = _config_id(self.space, sel)
@@ -293,7 +287,7 @@ if __name__ == "__main__":
     errcsv  = os.path.join(out_dir, f"{method}_^GSPC_errors_{architecture}.csv")
 
     if method == "random":
-        search = ResumableRandomSearch(space, ds, KerasAdvancedModelFactory(), evaltr, trials=15, metrics=["corr", "R2", "-MAE", "-RMSE", "hit_rate"], csv_path=csv, err_path=errcsv)
+        search = ResumableRandomSearch(space, ds, KerasAdvancedModelFactory(), evaltr, trials=5, metrics=["corr", "R2", "-MAE", "-RMSE", "hit_rate"], csv_path=csv, err_path=errcsv)
     elif method == "bayes":
         gpr = GaussianProcess(
         alpha=1e-3,             
