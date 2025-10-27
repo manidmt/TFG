@@ -18,7 +18,7 @@ def parse_model_filename(name):
     pattern = (
         r'^(keras|scikit-learn)_'                # framework
         r'([a-zA-Z0-9]+)_'                       # architecture
-        r'([\^A-Z0-9]+)'                         # main ticker
+        r'([\^A-Z0-9\-]+)'                       # main ticker
         r'(?:_([\^A-Z0-9_]+))?'                  # optional extra tickers
         r'_(\d{4})'                              # year
         r'(?:_(single|multiple))?'               # optional type

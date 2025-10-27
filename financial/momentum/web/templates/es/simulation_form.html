@@ -37,6 +37,7 @@
             <option value="lstm">lstm</option>
             <option value="rnn">rnn</option>
             <option value="cnn2d">cnn2d</option>
+            <option value="transformer">transformer</option>
           </optgroup>
           <optgroup label="Machine Learning (scikit-learn)">
             <option value="svr">svr</option>
@@ -45,8 +46,8 @@
         </select>
 
         <div style="margin-top:12px;">
-          <label for="extra_ticker">Ticker extra (para el modelo)</label>
-          <select name="extra_ticker" id="extra_tickers">
+          <label for="extra_tickers">Ticker extra (para el modelo)</label>
+          <select name="extra_tickers" id="extra_tickers">
             <option value="">Ninguno</option>
           </select>
           <small class="help">Para ML (svr, randomforest) no aplica y se usa “Ninguno”.</small>
@@ -62,6 +63,7 @@
         <label for="refuge">Activo refugio (opcional)</label>
         <select name="refuge" id="refuge">
           <option value="">Ninguno</option>
+          <option value="$$$">Cash</option>
           <option value="GLD">Oro</option>
           <option value="^TNX">Bono USA 10 años</option>
         </select>
