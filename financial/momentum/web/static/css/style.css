@@ -16,7 +16,18 @@ header {
     background-color: #273c75;
     padding: 15px;
     color: white;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+header .logo {
+    height: 150px;
+    width: auto;
+    border-radius: 40%;
+    object-fit: cover;
+    transform: translateX(30%);
 }
 
 main {
@@ -32,11 +43,12 @@ footer {
     margin-top: auto;
 }
 
-
-nav {
-    margin-top: 10px;
-    margin-bottom: 20px;
+header nav {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     text-align: center;
+    font-size: 135%;
 }
 
 a {
@@ -251,7 +263,6 @@ li a {
 
 .accordion{ display:flex; flex-direction:column; gap:10px; }
 
-/* Oculta el triángulo por defecto y ponemos uno custom */
 .acc-summary{
   list-style:none;
   cursor:pointer;
@@ -272,7 +283,6 @@ li a {
   color:#487eb0;
 }
 
-/* Panel expandido */
 .acc-item[open] .acc-summary{ background:#eef2ff; border-color:#cdd9ff; }
 .acc-item[open] .acc-summary::after{ transform:translateY(-50%) rotate(90deg); }
 
