@@ -1,19 +1,19 @@
-{% extends "es/layout.html" %}
+{% extends "en/layout.html" %}
 
 {% block content %}
-  <h2>Detalles del modelo {{ model_id }}</h2>
+  <h2>Model Details for {{ model_id }}</h2>
 
-  <h3 class="section-header">Gráfico Real vs Predicción</h3>
+  <h3 class="section-header">Actual vs Prediction Chart</h3>
     {% if plot_html %}
       {{ plot_html | safe }}
     {% else %}
-      <p>No hay datos suficientes para generar la gráfica.</p>
+      <p>Not enough data to generate the chart.</p>
     {% endif %}
     
   <section class="cards-grid">
 
     <div class="card">
-      <h3>Métricas</h3>
+      <h3>Metrics</h3>
       {% for tipo, valores in details.metrics.items() %}
         <div class="metric-block">
           <h4 class="subtle">{{ tipo|capitalize }}</h4>
@@ -41,14 +41,14 @@
     </div>
 
     <div class="card">
-      <h3>Hiperparámetros</h3>
+      <h3>Hyperparameters</h3>
       <div class="accordion">
         {% for key, value in details.hyperparameters.items() %}
           <details class="acc-item"{% if loop.first %} open{% endif %}>
             <summary class="acc-summary">{{ key|capitalize }}</summary>
             <div class="acc-panel">
               {% if value is string or value is number %}
-                <div class="kv-row"><span class="k">Valor</span><span class="v">{{ value }}</span></div>
+                <div class="kv-row"><span class="k">Value</span><span class="v">{{ value }}</span></div>
               {% else %}
                 <pre class="code-small">{{ value|tojson(indent=2) }}</pre>
               {% endif %}
@@ -61,11 +61,11 @@
 {% endblock %}
 
 {% block helptext %}
-  <h4>Detalles del modelo</h4>
+  <h4>Model Details</h4>
   <p>
-    Aquí se muestran los detalles del modelo seleccionado: la gráfica de predicción, las métricas de rendimiento y los hiperparámetros utilizados.
+    Here you can find the details of the selected model: the prediction chart, performance metrics, and the hyperparameters used.
   </p>
   <p>
-    Para más información sobre qué es cada cosa, recomiendo buscar las secciones correspondientes en la memoria del TFG (la tienes ahí abajo).
+    For more information about what each item is, I recommend looking for the corresponding sections in the TFG report (which you have below).
   </p>
 {% endblock %}
