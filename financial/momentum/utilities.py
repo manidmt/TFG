@@ -1,66 +1,31 @@
 import os
+import gc
+import json
+import numpy as np
+import pandas as pd
+import tensorflow as tf 
+from keras import backend as K
 from dotenv import load_dotenv
 from pathlib import Path
+from typing import Dict, Any
+from sklearn.metrics import r2_score
+from financial.lab.experiment import Experiment
 
 def find_dotenv(start_path='.'):
-    """Busca el archivo .env ascendiendo desde la ruta de inicio."""
+    """
+    Find the .env file by searching upwards from the start_path.
+    """
     current_path = Path(start_path).resolve()
-    while current_path != current_path.parent:  # Evita el directorio raíz
+    while current_path != current_path.parent:  # Avoid the root directory
         if (current_path / '.env').is_file():
             return str(current_path / '.env')
         current_path = current_path.parent
     return None
 
-# Prueba de carga del archivo .env
-
-import pandas as pd
-import numpy as np
-import tensorflow as tf # Necesario para tf.convert_to_tensor si decides usarlo, aunque la propuesta actual usa solo NumPy.
-
-# Importa tus otras dependencias (labevaluation, fd, etc.)
-# from ... import ModelBuildingTask # Asumo que ModelBuildingTask es una clase base
-# import ... # Asegúrate de importar fd, ModelFactory, etc.
-
-# --- FUNCIÓN AUXILIAR: _create_sequences_from_df (Ponla al principio del archivo o en un archivo de utilidades) ---
-def _create_sequences_from_df(df_features: pd.DataFrame, df_target: pd.DataFrame, horizon: int):
-    """
-    Convierte un DataFrame 2D de features (con N columnas de 'change_i')
-    y un DataFrame/Series de target en arrays NumPy 3D (para features) y 2D (para target).
-
-    Args:
-        df_features (pd.DataFrame): DataFrame con todas las features (e.g., 90 columnas para 90 cambios).
-        df_target (pd.DataFrame or pd.Series): DataFrame/Series con el target.
-        horizon (int): El número de timesteps (e.g., 90).
-
-    Returns:
-        tuple: (X_reshaped_np, y_np)
-    """
-    X_np = df_features.values # Convertir a NumPy array
-    y_np = df_target.values   # Convertir a NumPy array
-
-    n_samples, n_features_total = X_np.shape
-    assert n_features_total % horizon == 0, (
-        f"Incompatible shape: expected features to be divisible by horizon={horizon}, "
-        f"but got total={n_features_total}"
-    )
-    n_features_per_timestep = n_features_total // horizon # Debería ser 1 en tu caso
-
-    # Reshape the features to (n_samples, timesteps, n_features_per_timestep)
-    X_reshaped_np = X_np.reshape((n_samples, horizon, n_features_per_timestep))
-
-    # Asegurarse de que y_np tenga la forma (n_samples, 1) para Keras
-    if y_np.ndim == 1:
-        y_np = y_np.reshape(-1, 1)
-
-    return X_reshaped_np, y_np
-
-import json
-from typing import Dict, Any
-from sklearn.metrics import r2_score
-from financial.lab.experiment import Experiment
-
 def metrics(experiment, predictions, target, model_path, global_model=True):
-    
+    """
+    Compute and store metrics for the given experiment.
+    """
     all_metrics_to_save: Dict[str, Any] = {}
     
     if target.size == predictions.size:
@@ -117,16 +82,18 @@ def metrics(experiment, predictions, target, model_path, global_model=True):
     try:
         with open(file_path, 'w') as f:
             json.dump(all_metrics_to_save, f, indent=4)
-        print(f"\nMétricas guardadas exitosamente en: {file_path}")
+        print(f"\nMetrics saved successfully in: {file_path}")
     except Exception as e:
-        print(f"\nError al guardar las métricas en el archivo {file_path}: {e}")   
+        print(f"\nError while saving matrics in {file_path}: {e}")   
 
 
 
 import requests
 
 def send_telegram_message(message):
-
+    """
+    Send a message via Telegram bot.
+    """
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
     TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -137,18 +104,12 @@ def send_telegram_message(message):
     try:
         response = requests.post(url, data=payload)
         if response.status_code != 200:
-            #print("Error en la respuesta de Telegram:")
             print(response.status_code)
             print(response.text)
-        #else:
-            #print("Mensaje enviado correctamente.")
     except Exception as e:
-        print(f"No se pudo enviar el mensaje de Telegram: {e}")
+        print(f"Telegram message error: {e}")
     
 
-import tensorflow as tf
-from keras import backend as K
-import gc
 
 def reset_gpu():
     K.clear_session()
@@ -159,19 +120,20 @@ def reset_gpu():
 import pickle
 
 def store_results(ticker: str, model_name: str, predictions: pd.Series, predictions_rel: pd.Series, cache_path: str, model_path: str):
-
+    """
+    Store model predictions in both pickle and CSV formats.
+    """
     for prefix in ["keras_", "scikit-learn_"]:
         rel_model_name = model_name.removeprefix(prefix)
         
     base_name = f"model-momentum-{rel_model_name}@pred" 
 
-    # Guardar .pkl para Wrapper
     with open(os.path.join(cache_path, base_name), "wb") as f:
         pickle.dump(predictions_rel, f)
-    print("Prediciones guardadas pickle")
-    # Guardar .csv para inspección y web
+    print("Predictions saved pickle")
+
     predictions.to_csv(os.path.join(model_path, model_name + "_preds.csv"))
-    print("Prediciones guardadas csv")
+    print("Predictions saved csv")
 
 
 if __name__ == '__main__':
@@ -180,7 +142,7 @@ if __name__ == '__main__':
     if dotenv_path:
         load_dotenv(dotenv_path=dotenv_path)
         model_path = os.getenv("MODEL")
-        print(f"Ruta del modelo cargada desde: {dotenv_path}")
+        print(f"Model path loaded from: {dotenv_path}")
         print(f"MODEL: {model_path}")
     else:
-        print("No se encontró el archivo .env.")
+        print("No .env file found.")

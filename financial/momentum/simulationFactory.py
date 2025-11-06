@@ -29,12 +29,17 @@ from dotenv import load_dotenv
 from financial.momentum.utilities import find_dotenv
 
 class SimulationFactory:
+    """
+    Factory for creating and running simulations.
+    """
     def __init__(self, start_year, end_year):
         self.start_year = start_year
         self.end_year = end_year
 
     def run_simulation(self, universe, model_architecture, extra_info, num_assets, active_refuge):
-        
+        """
+        Run the simulation with the given parameters.
+        """
         load_dotenv(dotenv_path=find_dotenv())
 
         cache = os.environ["CACHE"] + "/"
@@ -75,6 +80,9 @@ class SimulationFactory:
         self.clenowSimulation = simulation_clenow
 
     def marketBenchmark(self):
+        """
+        Run the market benchmark simulation.
+        """
         ds = fd.CachedDataStore(path=os.environ["DATA"], cache=FileCache(cache_path=os.environ["CACHE"] + "/", update_strategy=NoUpdateStrategy()))
         assets = {'^GSPC': 1.0}
         benchmark = fp.WeightedPortfolio.from_assets("Benchmark", assets)
@@ -93,6 +101,9 @@ class SimulationFactory:
         return 100*fps.CumulativeReturn().get_series(self.clenowSimulation.returns())
 
     def statistics(self, returns):
+        """
+        Compute various financial statistics for the given returns.
+        """
         start_date = f"{self.start_year}-01-01"
         end_date = f"{self.end_year}-06-30" if self.end_year == 2025 else f"{self.end_year}-12-31"
 
@@ -109,16 +120,25 @@ class SimulationFactory:
         return statistics
 
     def simulation_statistics(self):
+        """
+        Compute various statistics for the simulation.
+        """
         statistics = self.statistics(self.modelSimulation.returns())
         statistics["average_monthly_rotation"] = 100*self.modelSimulation.monthly_rotation()
         return statistics
 
     def clenow_statistics(self):
+        """
+        Compute various statistics for the Clenow simulation.
+        """
         statistics = self.statistics(self.clenowSimulation.returns())
         statistics["average_monthly_rotation"] = 100*self.clenowSimulation.monthly_rotation()
         return statistics
 
     def benchmark_statistics(self):
+        """
+        Compute various statistics for the benchmark simulation.
+        """
         monthly_returns = self.marketBenchmark()["monthly_returns"]
         statistics = self.statistics(monthly_returns)
         statistics["average_monthly_rotation"] = 0.0
