@@ -1,0 +1,141 @@
+{% extends "en/layout.html" %}
+
+{% block content %}
+<div class="card sim-form">
+  <h2>Portfolio Simulation</h2>
+  <p style="text-align:center;color:#6b7280;margin-top:0;">Configure the dates, assets, and model for the simulation.</p>
+
+  <form method="POST" action="">
+    <div class="form-grid">
+      <!-- Years -->
+      <div>
+        <label for="start_year">Start Year</label>
+        <input type="number" name="start_year" id="start_year" value="2020" required>
+      </div>
+      <div>
+        <label for="end_year">End Year</label>
+        <input type="number" name="end_year" id="end_year" value="2025" required>
+      </div>
+
+      <!-- Universe -->
+      <div>
+        <label for="tickers">Tickers for Simulation</label>
+        <select name="tickers" id="tickers" multiple size="10" required>
+          {% for ticker in tickers %}
+            <option value="{{ ticker }}">{{ ticker }}</option>
+          {% endfor %}
+        </select>
+        <small class="help">Select one or more</small>
+      </div>
+
+      <!-- Model + extras -->
+      <div>
+        <label for="architecture">Model (architecture)</label>
+        <select name="architecture" id="architecture" required>
+          <optgroup label="Deep Learning (Keras)">
+            <option value="cnn">cnn</option>
+            <option value="lstm">lstm</option>
+            <option value="rnn">rnn</option>
+            <option value="cnn2d">cnn2d</option>
+            <option value="transformer">transformer</option>
+          </optgroup>
+          <optgroup label="Machine Learning (scikit-learn)">
+            <option value="svr">svr</option>
+            <option value="randomforest">randomforest</option>
+          </optgroup> 
+        </select>
+
+        <div style="margin-top:12px;">
+          <label for="extra_tickers">Extra Ticker (for the model)</label>
+          <select name="extra_tickers" id="extra_tickers">
+            <option value="">None</option>
+          </select>
+          <small class="help">For ML (svr, randomforest) it does not apply and "None" is used.</small>
+        </div>
+      </div>
+
+      <!-- Portfolio Size + Refuge -->
+      <div>
+        <label for="num_assets">Number of assets in portfolio</label>
+        <input type="number" name="num_assets" id="num_assets" value="4" min="1" required>
+      </div>
+      <div>
+        <label for="refuge">Refuge asset (optional)</label>
+        <select name="refuge" id="refuge">
+          <option value="">None</option>
+          <option value="$$$">Cash</option>
+          <option value="GLD">Gold</option>
+          <option value="^TNX">USA 10-Year Bond</option>
+        </select>
+      </div>
+
+      <!-- Buttons -->
+      <div class="full actions">
+        <button type="button" class="btn btn-secondary" id="clearBtn">Limpiar</button>
+        <button type="submit" class="btn btn-primary">Ejecutar simulación</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+const archSelect  = document.getElementById('architecture');
+const extraSelect = document.getElementById('extra_tickers');
+const clearBtn    = document.getElementById('clearBtn');
+
+function disableExtras(disabled){
+  extraSelect.disabled = disabled;
+  if(disabled){
+    extraSelect.innerHTML = '<option value="">Ninguno</option>';
+  }
+}
+
+async function loadExtrasForArch(arch){
+  if(arch==='svr' || arch==='randomforest'){ disableExtras(true); return; }
+  disableExtras(false);
+  try{
+    const resp  = await fetch(`/{{ lang }}/simulacion/api/extras?arch=${encodeURIComponent(arch)}`);
+    const data  = await resp.json(); // { extras: [...] }
+    const opts  = ['<option value="">Ninguno</option>'];
+    for(const e of (data.extras||[])){ opts.push(`<option value="${e}">${e}</option>`); }
+    extraSelect.innerHTML = opts.join('');
+  }catch(e){
+    console.error('Error cargando extras', e);
+    extraSelect.innerHTML = '<option value="">Ninguno</option>';
+  }
+}
+
+archSelect.addEventListener('change', ()=>loadExtrasForArch(archSelect.value));
+
+clearBtn.addEventListener('click', ()=>{
+  document.getElementById('start_year').value = 2020;
+  document.getElementById('end_year').value = 2025;
+  document.getElementById('tickers').selectedIndex = -1;
+  document.getElementById('num_assets').value = 4;
+  document.getElementById('refuge').value = '';
+  extraSelect.value = '';
+  loadExtrasForArch(archSelect.value);  
+});
+
+loadExtrasForArch(archSelect.value);
+</script>
+{% endblock %}
+
+{% block helptext %}
+  <h4>Configuration of the simulation</h4>
+  <p>
+    Here you can set the parameters for simulating the portfolio based on the following:
+  </p>
+  <ul>
+    <li><strong>Start Year:</strong> Start year for the simulation.</li>
+    <li><strong>End Year:</strong> End year for the simulation.</li>
+    <li><strong>Model:</strong> Model to be used for the simulation.</li>
+    <li><strong>Tickers:</strong> Assets considered for creating the portfolio. Use Ctrl/Shift + Click to select multiple</li>
+    <li><strong>Extra Tickers:</strong> Additional assets that the model can use to improve prediction (only for Keras models).</li>
+    <li><strong>Number of Assets:</strong> How many assets will be in the portfolio at each moment.</li>
+    <li><strong>Refuge Asset:</strong> Optional refuge asset for the portfolio.</li>
+  </ul>
+  <p>
+    For more information, I recommend consulting the corresponding section in the TFG report (you have the link below).
+  </p>
+{% endblock %}

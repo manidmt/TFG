@@ -1,0 +1,32 @@
+{% extends "en/layout.html" %}
+
+{% block content %}
+  <h2 class="section-header">Stocks with Available Models</h2>
+
+  {% if tickers %}
+    <div class="ticker-grid">
+      {% for ticker in tickers %}
+        <div class="ticker-card">
+          <a href="/{{ lang }}/acciones/{{ ticker }}">{{ ticker }}</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No models were found.</p>
+  {% endif %}
+{% endblock %}
+
+{% block helptext %}
+  <h4>Stocks with Available Models</h4>
+  <p>
+    Here you can find the tickers that have at least one trained model.  
+    You can click on a ticker to see the specific models available for that stock.
+  </p>
+  <p>
+    If you don’t see the ticker you're looking for, it means there are no models available for that stock. More may be added in the future!
+  </p>
+  <p>
+    For those who may not know, a stock ticker is the unique symbol that identifies a publicly traded company.  
+    For example, "AAPL" for Apple or "GOOGL" for Alphabet (Google).
+  </p>
+{% endblock %}

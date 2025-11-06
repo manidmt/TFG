@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Proyecto TFG</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <img src="/static/img/LogoTFG.png" alt="Logo" class="logo">
+        <nav>
+            <a href="/en/">Home</a> |
+            <a href="/en/acciones">Stocks</a> |
+            <a href="/en/simulacion">Simulations</a> |
+        </nav>
+
+        <button class="help-btn" id="helpBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="helpPopover" title="Help">
+            ?
+            <span class="help-tooltip" role="tooltip">Help</span>
+        </button>
+    </header>
+    <div class="help-popover" id="helpPopover" role="dialog" aria-modal="false" aria-labelledby="helpTitle">
+        <div class="help-popover-header">
+            <h3 id="helpTitle">Help</h3>
+            <button class="help-close" id="helpClose" aria-label="Close">×</button>
+        </div>
+        <div class="help-popover-body">
+            {% block helptext %}{% endblock %}
+        </div>
+    </div>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        <p>
+            <a href="{{ url_for('main.autor', lang=lang) }}">Author</a> |
+            <a href="https://github.com/manidmt/TFG.git" target="_blank">Repo</a>
+        </p>
+    </footer>
+</body>
+</html>
+
+<script>
+(function(){
+  const btn = document.getElementById('helpBtn');
+  const pop = document.getElementById('helpPopover');
+  const closeBtn = document.getElementById('helpClose');
+
+  function openPop(){
+    pop.classList.add('open');
+    btn.setAttribute('aria-expanded','true');
+  }
+  function closePop(){
+    pop.classList.remove('open');
+    btn.setAttribute('aria-expanded','false');
+  }
+
+  btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    pop.classList.contains('open') ? closePop() : openPop();
+  });
+  closeBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    closePop();
+  });
+  document.addEventListener('click', (e)=>{
+    if(!pop.contains(e.target) && e.target !== btn) closePop();
+  });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape') closePop();
+  });
+})();
+</script>

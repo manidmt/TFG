@@ -1,0 +1,52 @@
+{% extends "en/layout.html" %}
+
+{% block content %}
+  <h2>Available Models for {{ ticker_name }}</h2>
+
+  {% if models %}
+    <table class="generic-table ">
+      <thead>
+        <tr>
+          <th>Architecture</th>
+          <th>Trained until</th>
+          <th>Type</th>
+          <th>Extra Information</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for model in models %}
+        <tr>
+          <td><a href="/{{ lang }}/acciones/{{ ticker }}/{{ model.base_name }}">{{ model.architecture }}</a></td>
+          <td>{{ model.year }}</td>
+          <td>{{ model.framework }}</td>
+          <td>{{ model.extra_tickers }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No models were found for {{ ticker }}</p>
+  {% endif %}
+{% endblock %}
+
+{% block helptext %}
+  <h4>Models for Each Stock</h4>
+  <p>
+    Here you can find the details of the models available for the selected stock. You can click on the architecture name to see more information about each model.
+  </p>
+  <p>
+    If you don’t see the model you're looking for, it means that no model has been trained for that stock yet (or there are no plans to do so). More may be added in the future!
+  </p>
+  <p>
+    What each column means:
+  </p>
+  <ul>
+    <li><strong>Architecture:</strong> The type of model used (e.g., LSTM, GRU, etc.).</li>
+    <li><strong>Trained until:</strong> The date up to which the model was trained. For 2025, the data goes up to June.</li>
+    <li><strong>Type:</strong> Whether it was created using Keras (Deep Learning) or scikit-learn (Machine Learning).</li>
+    <li><strong>Extra Information:</strong> Indicates whether the model was trained using additional data besides the main stock.</li>
+  </ul>
+  <p>
+    For more information about each concept, I recommend checking the corresponding sections in the TFG report (you can find the link below).
+  </p>
+{% endblock %}

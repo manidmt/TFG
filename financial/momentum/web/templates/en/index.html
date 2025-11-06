@@ -1,0 +1,43 @@
+{% extends "en/layout.html" %}
+
+{% block content %}
+  <h2>Latest Trained Models</h2>
+    <div class="latest-models">
+      <div class="model-column">
+        <h3>Machine Learning</h3>
+        <ul>
+          {% for model in sklearn_models %}
+            <li>
+              <a href="/{{ lang }}/acciones/{{ model.ticker }}/{{ model.model_id }}">
+                {{ model.architecture }} - {{ model.ticker }} - {{ model.year }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="model-column">
+        <h3>Deep Learning</h3>
+        <ul>
+          {% for model in keras_models %}
+            <li>
+              <a href="/{{ lang }}/acciones/{{ model.ticker }}/{{ model.model_id }}">
+                {{ model.architecture }} - {{ model.ticker }} - {{ model.year }}
+                {% if model.type and model.type != 'unknown' %}- {{ model.type }}{% endif %}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+{% endblock %}
+
+{% block helptext %}
+  <h4>Main Page</h4>
+  <p>
+      Welcome! Explore the different pages of the web, where you will find information about each page.
+  </p>
+  <p>
+    Here you will find the latest models that have been trained and stored, divided by model type: those that use neural networks (deep learning) and those that do not (machine learning).
+  </p>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "en/layout.html" %}
+
+{% block content %}
+  {% macro stats_list(s) -%}
+  <ul class="stats-list">
+    <li><strong>Cumulative Return:</strong> {{ s.cumulative_return | round(2) }}%</li>
+    <li><strong>Annualized Return:</strong> {{ s.annualized_return | round(2) }}%</li>
+    <li><strong>Maximum Drawdown:</strong> {{ s.maximum_drawdown | round(2) }}%</li>
+    <li><strong>Annualized Volatility:</strong> {{ s.annualized_volatility | round(2) }}%</li>
+    <li><strong>Sharpe Ratio:</strong> {{ s.sharpe_ratio | round(2) }}</li>
+    <li><strong>Sortino Ratio:</strong> {{ s.sortino_ratio | round(2) }}</li>
+    <li><strong>Average Monthly Rotation:</strong> {{ s.average_monthly_rotation | round(2) }}%</li>
+  </ul>
+  {%- endmacro %}
+
+  <h2>Simulation results</h2>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-target="#tab-model">Simulation</button>
+    <button class="tab-btn" data-target="#tab-clenow">Clenow</button>
+    <button class="tab-btn" data-target="#tab-benchmark">Benchmark (S&P 500)</button>
+    <button class="tab-btn" data-target="#tab-compare">Comparison</button>
+  </div>
+
+  <!-- Panels -->
+  <div class="tab-panels">
+    <section id="tab-model" class="tab-panel active">
+      <h3>Statistics (Simulation)</h3>
+      {{ stats_list(stats.simulation) }}
+    </section>
+
+    <section id="tab-clenow" class="tab-panel">
+      <h3>Statistics (Clenow)</h3>
+      {{ stats_list(stats.clenow) }}
+    </section>
+
+    <section id="tab-benchmark" class="tab-panel">
+      <h3>Statistics (Benchmark)</h3>
+      {{ stats_list(stats.benchmark) }}
+    </section>
+
+    <section id="tab-compare" class="tab-panel">
+      <h3>Comparison</h3>
+      <div class="table-wrap">
+        <table class="generic-table ">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Simulation</th>
+              <th>Clenow</th>
+              <th>Benchmark (S&P 500)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Cumulative Return</td>
+              <td>{{ stats.simulation.cumulative_return | round(2) }}%</td>
+              <td>{{ stats.clenow.cumulative_return | round(2) }}%</td>
+              <td>{{ stats.benchmark.cumulative_return | round(2) }}%</td>
+            </tr>
+            <tr>
+              <td>Annualized Return</td>
+              <td>{{ stats.simulation.annualized_return | round(2) }}%</td>
+              <td>{{ stats.clenow.annualized_return | round(2) }}%</td>
+              <td>{{ stats.benchmark.annualized_return | round(2) }}%</td>
+            </tr>
+            <tr>
+              <td>Maximum Drawdown</td>
+              <td>{{ stats.simulation.maximum_drawdown | round(2) }}%</td>
+              <td>{{ stats.clenow.maximum_drawdown | round(2) }}%</td>
+              <td>{{ stats.benchmark.maximum_drawdown | round(2) }}%</td>
+            </tr>
+            <tr>
+              <td>Annualized Volatility</td>
+              <td>{{ stats.simulation.annualized_volatility | round(2) }}%</td>
+              <td>{{ stats.clenow.annualized_volatility | round(2) }}%</td>
+              <td>{{ stats.benchmark.annualized_volatility | round(2) }}%</td>
+            </tr>
+            <tr>
+              <td>Sharpe Ratio</td>
+              <td>{{ stats.simulation.sharpe_ratio | round(2) }}</td>
+              <td>{{ stats.clenow.sharpe_ratio | round(2) }}</td>
+              <td>{{ stats.benchmark.sharpe_ratio | round(2) }}</td>
+            </tr>
+            <tr>
+              <td>Sortino Ratio</td>
+              <td>{{ stats.simulation.sortino_ratio | round(2) }}</td>
+              <td>{{ stats.clenow.sortino_ratio | round(2) }}</td>
+              <td>{{ stats.benchmark.sortino_ratio | round(2) }}</td>
+            </tr>
+            <tr>
+              <td>Average Monthly Rotation</td>
+              <td>{{ stats.simulation.average_monthly_rotation | round(2) }}%</td>
+              <td>{{ stats.clenow.average_monthly_rotation | round(2) }}%</td>
+              <td>{{ stats.benchmark.average_monthly_rotation | round(2) }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="simulation-plot">
+    <h3>Portfolio Evolution</h3>
+    {{ graph | safe }}
+  </div>
+
+  <br>
+  <a href="/{{ lang }}/simulacion">← Back to Form</a>
+
+
+  <script>
+    (function(){
+      const btns = document.querySelectorAll('.tab-btn');
+      const panels = document.querySelectorAll('.tab-panel');
+      btns.forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          // activate button
+          btns.forEach(b=>b.classList.remove('active'));
+          btn.classList.add('active');
+          // activate panel
+          const target = btn.getAttribute('data-target');
+          panels.forEach(p=>p.classList.remove('active'));
+          const panel = document.querySelector(target);
+          if(panel) panel.classList.add('active');
+        });
+      });
+    })();
+  </script>
+{% endblock %}
+
+{% block helptext %}
+  <h4>Simulation Results</h4>
+  <p>
+    Heare the results of the simulation based on the selected model and parameters are shown
+    againts the Clenow strategy and the S&P 500 benchmark.
+  </p>
+{% endblock %}
+
