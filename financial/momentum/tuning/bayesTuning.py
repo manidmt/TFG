@@ -8,6 +8,7 @@ from financial.lab.tuning.estimators import GaussianProcess, GaussianProcessOpti
 
 class OOSBayesGPO(GaussianProcessOptimizer):
     """
+    Bayesian Optimization adapted to out-of-sample evaluations.
     """
     def __init__(self, space, gpr: GaussianProcess, restarts: int = 50, weights: dict | None = None):
         super().__init__(space, gpr, restarts)
@@ -16,6 +17,8 @@ class OOSBayesGPO(GaussianProcessOptimizer):
 
     def hyperparameter_score(self, evaluation):
         """
+        Compute the score of a hyperparameter configuration based on out-of-sample metrics.
+        The score is a weighted sum of selected metrics.
         """
         oos = evaluation["oos"]
         s = 0.0

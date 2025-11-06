@@ -22,7 +22,7 @@ from financial.momentum.tuning.hyperSpaces import build_transformer_space, build
 if __name__ == "__main__":
     load_dotenv()
 
-    # --------- Parámetros ----------
+    # --------- Parameters ----------
     ticker     = "^GSPC"
     start_date = "1990-01-01"
     end_date   = "2025-06-30"
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         cache=FileCache(cache_path=os.environ["CACHE"] + "/", update_strategy=NoUpdateStrategy())
     )
 
-    # --------- Espacio + Evaluador ----------
+    # --------- Space + Evaluator ----------
     if architecture == "transformer":
         space = build_transformer_space()
     elif architecture == "cnn":
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     elif architecture == "lstm":
         space = build_lstm_space()
     else:
-        raise ValueError(f"Arquitectura desconocida: {architecture}")
+        raise ValueError(f"Unknown architecture: {architecture}")
 
     evaluator = OOSMomentumEvaluator(
         ds=ds, ticker=ticker,
@@ -59,22 +59,20 @@ if __name__ == "__main__":
 
     factory = KerasAdvancedModelFactory()
     search = RandomSearch(space, ds, factory, evaluator, trials=trials)
-    # Métricas usadas por el RandomSearch para decidir "best"
+    # MMetrics used by RandomSearch to decide "best"
     search.metrics = ["corr", "R2", "-MAE", "-RMSE", "hit_rate"]
     search.best = {
         m: {"value": float("-inf"), "best_configuration": None, "best_model": None}
         for m in search.metrics
     }
-    # --------- Ejecutar ----------
+    # --------- Execute ----------
     search.run()
 
-    # --------- Guardar TODOS los trials ----------
+    # --------- Save ALL trials ----------
     rows = []
     for (cfg_sel, evaluation) in search.trials:
-        # cfg_sel: selección de etiquetas del espacio
-        # evaluation["oos"] es OOSResult; sus métricas están en .m (dict)
         metrics = evaluation["oos"].m
-        merged  = space.parameters(cfg_sel)  # hiperparámetros expandidos
+        merged  = space.parameters(cfg_sel)  # full merged configuration
         rows.append({
             "config_selection": json.dumps(cfg_sel),
             "config_merged":    json.dumps(merged),

@@ -13,15 +13,24 @@ from financial.lab.tuning.estimators import GaussianProcess, GaussianProcessOpti
 
 
 def _config_id(space: HyperparameterSearchSpace, selection: dict) -> str:
+    """
+    Get the configuration ID for a given selection of hyperparameters.
+    """
     return space.configuration_id(selection)
 
 def _safe_append_csv(path: str, row: dict):
+    """
+    Safely append a row to a CSV file, creating the file if it doesn't exist.
+    """
     os.makedirs(os.path.dirname(path), exist_ok=True)
     df = pd.DataFrame([row])
     header = not os.path.isfile(path)
     df.to_csv(path, mode="a", header=header, index=False)
 
 def _try_json_load(s: str):
+    """
+    Try to load a JSON string, returning None on failure.
+    """
     try:
         return json.loads(s)
     except Exception:
@@ -29,6 +38,9 @@ def _try_json_load(s: str):
 
 def _rebuild_oos_result(row: pd.Series):
     class OOSResult:
+        """
+        Rebuild OOSResult from a DataFrame row.
+        """
         def __init__(self, metrics_dict: dict): self.m = metrics_dict
         def metric(self, k: str):
             return -float(self.m[k[1:]]) if k.startswith("-") else float(self.m[k])
@@ -44,6 +56,9 @@ def _rebuild_oos_result(row: pd.Series):
     return {"oos": OOSResult(m)}
 
 def _bootstrap_from_csv(self, space, csv_path: str):
+    """
+    Bootstrap the optimizer state from an existing CSV file of trials.
+    """
     self.done_ids = set()
     if not os.path.isfile(csv_path):
         return
@@ -85,6 +100,9 @@ def _bootstrap_from_csv(self, space, csv_path: str):
 # ---- Random resumible --------------------------------------------------------
 
 class ResumableRandomSearch(RandomSearch):
+    """
+    Random Search optimizer that can resume from a CSV file of previous trials.
+    """
     def __init__(self, space, ds, factory, evaluator, trials, csv_path, err_path, metrics=None):
         super().__init__(space, ds, factory, evaluator, trials)
         self.csv_path = csv_path
@@ -101,6 +119,9 @@ class ResumableRandomSearch(RandomSearch):
         _bootstrap_from_csv(self, space, csv_path)
 
     def next(self) -> dict:
+        """
+        Get the next configuration to evaluate.
+        """
         for _ in range(500):
             sel = self.space.random()
             cid = _config_id(self.space, sel)
@@ -109,6 +130,9 @@ class ResumableRandomSearch(RandomSearch):
         raise RuntimeError("No combinations left")
 
     def trial(self, configuration: dict) -> None:
+        """
+        Execute a trial for the given configuration.
+        """
         cfg_id = _config_id(self.space, configuration)
         try:
             trial_id  = cfg_id
@@ -152,6 +176,9 @@ class ResumableRandomSearch(RandomSearch):
 # ---- Bayesian resumible ------------------------------------------------------
 
 class ResumableBayesianOptimizer(BayesianOptimizer):
+    """
+    Bayesian Optimization optimizer that can resume from a CSV file of previous trials.
+    """
     def __init__(self, space, ds, factory, evaluator,
                  estimator, trials, csv_path, err_path,
                  metrics=None,
@@ -179,6 +206,7 @@ class ResumableBayesianOptimizer(BayesianOptimizer):
 
     def next(self) -> dict:
         """
+        Get the next configuration to evaluate.
         """
         if self.total_trials() < self.minimum_initial_points():
             for _ in range(500):
@@ -203,6 +231,9 @@ class ResumableBayesianOptimizer(BayesianOptimizer):
         raise RuntimeError("No combinations left")
 
     def trial(self, configuration: dict) -> None:
+        """
+        Execute a trial for the given configuration.
+        """
         cfg_id = _config_id(self.space, configuration)
         try:
             trial_id  = cfg_id

@@ -124,13 +124,13 @@ if __name__ == "__main__":
         "callbacks":{"early_stopping":{"patience":8},"reduce_on_plateau":{"patience":4,"factor":0.5}}}
     ],
     "model": [
-        # Bloques ligeros
+        # Light capacity
         {"n_blocks":2, "filters":[64,64],  "kernel_sizes":[7,3], "padding":"same",
         "pool_every":1, "pool_size":2, "dropout":0.2, "l2":1e-6, "batch_norm":True, "global_pool":True},
-        # Más capacidad
+        # More capacity
         {"n_blocks":3, "filters":[64,64,64], "kernel_sizes":[5,3,3], "padding":"same",
         "pool_every":1, "pool_size":2, "dropout":0.3, "l2":1e-6, "batch_norm":True, "global_pool":True},
-        # Receptivo más largo con dilations
+        # Longer receptive field with dilations
         {"n_blocks":3, "filters":[64,64,64], "kernel_sizes":[3,3,3], "dilations":[1,2,4], "padding":"causal",
         "pool_every":0, "dropout":0.2, "l2":1e-6, "batch_norm":True, "global_pool":True},
     ],

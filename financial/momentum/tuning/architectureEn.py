@@ -20,6 +20,9 @@ from financial.momentum.utilities import store_results, reset_gpu, find_dotenv, 
 
 
 def architecture_engineering( datastore, start_date, end_date, ticker="^GSPC",extra_tickers = None):
+    """
+    Perform architecture engineering for the best model found in hyperparameter tuning.
+    """
 
     lookahead = 20
     horizon = 90

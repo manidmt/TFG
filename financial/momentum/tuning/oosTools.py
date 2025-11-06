@@ -14,6 +14,7 @@ from financial.momentum.utilities import send_telegram_message
 
 def quick_oos_metrics(ds, ticker, pred_oos, lookahead, start, end):
     """
+    Compute out-of-sample metrics for given predictions.
     """
     P = ds.get_data(ticker, start, end).astype(float)
     df = pd.DataFrame({"P": P, "pred": pred_oos}).dropna()
@@ -50,6 +51,7 @@ class OOSResult:
 
 class OOSMomentumEvaluator(ModelEvaluator):
     """
+    Evaluator for out-of-sample project models.
     """
     def __init__(self, ds, ticker, start, end, lookahead, horizon, quick_oos_metrics_fn, default_architecture):
         self.ds, self.ticker = ds, ticker
