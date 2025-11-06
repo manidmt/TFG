@@ -72,15 +72,6 @@ class RecurrentModel(KerasModel):
             metrics=optimizer_params["metrics"]
         )
 
-        # print(f"X_train before fit: {X_train.shape}, y_train: {y_train.shape}")
-        # print(f"Number of {X_train.shape[0]} samples, {X_train.shape[1]} timesteps, {X_train.shape[2]} features")
-
-        # print("X_train shape:", X_train.shape, "mean:", X_train.mean(), "std:", X_train.std())
-        # print("y_train.mean():", y_train.mean())
-        # print("y_train.std():", y_train.std())
-        # print("y_train.min():", y_train.min())
-        # print("y_train.max():", y_train.max())
-
         self.model.fit(
             X_train, y_train,
             epochs=optimizer_params["epochs"],
@@ -112,34 +103,7 @@ class RecurrentModel(KerasModel):
         Returns:
             keras.Model: The initialized Keras model.
         """
-        # layers = self.hyperparameters["topology"]["layers"]
-        # # activation_hidden = self.hyperparameters["topology"]["activation"]["hidden"]
-        # activation_output = self.hyperparameters["topology"]["activation"]["output"]
-        # horizon = self.hyperparameters["input"]["horizon"]
-        # n_features = self.sources.size()  // horizon # For each ticker we have horizon values, we need to divide by horizon to get the number of tickers
-        # #print(self.sources, n_features)
 
-        # model = keras.models.Sequential()
-        # model.add(keras.layers.Input(shape=(horizon, n_features)))
-
-        # if self.architecture == "lstm":
-        #     for units in layers[:-1]:
-        #         model.add(keras.layers.LSTM(units, return_sequences=True))
-
-        #     model.add(keras.layers.LSTM(layers[-1]))
-
-        # elif self.architecture == "rnn":
-        #     for units in layers[:-1]:
-        #         model.add(keras.layers.SimpleRNN(units, return_sequences=True))
-
-        #     model.add(keras.layers.SimpleRNN(layers[-1]))
-
-        # else:
-        #     raise ValueError(f"Unsupported recurrent architecture: {self.architecture}")
-        
-        # model.add(keras.layers.Dense(1, activation=activation_output))
-
-        # print("\n\n\nlstm/rnn\n\n\n\n")
         layers_cfg = self.hyperparameters["topology"]["layers"]
         act_hidden = self.hyperparameters["topology"]["activation"].get("hidden", "relu")
         act_out    = self.hyperparameters["topology"]["activation"]["output"]
@@ -160,7 +124,6 @@ class RecurrentModel(KerasModel):
         model = keras.models.Sequential()
         model.add(keras.layers.Input(shape=(horizon, n_features)))
 
-        # Capas recurrentes
         for i, units in enumerate(layers_cfg):
             return_seq = (i < len(layers_cfg) - 1)
             rnn = RNNLayer(
@@ -180,7 +143,6 @@ class RecurrentModel(KerasModel):
             if layer_dropout > 0.0:
                 model.add(keras.layers.Dropout(layer_dropout))
 
-        # Cabeza densa opcional
         for units in dense_head:
             model.add(keras.layers.Dense(units, activation=act_hidden))
             if batch_norm:
@@ -188,7 +150,6 @@ class RecurrentModel(KerasModel):
             if layer_dropout > 0.0:
                 model.add(keras.layers.Dropout(layer_dropout))
 
-        # Salida
         model.add(keras.layers.Dense(1, activation=act_out))
         return model
  
@@ -289,30 +250,16 @@ class ConvolutionalModel(KerasModel):
         horizon = self.hyperparameters["input"]["horizon"]
         n_features = self.sources.size() // horizon # For each ticker we have horizon values, we need to divide by horizon to get the number of tickers
 
-        # model = keras.models.Sequential()
-
-        # if self.architecture == "cnn":
-        #     model.add(keras.layers.Input(shape=(horizon, n_features)))
-        #     model.add(keras.layers.Conv1D(filters=layers[0], kernel_size=horizon, activation=activation_hidden, padding='valid'))
-
-        #     model.add(keras.layers.Flatten())
-
-        #     for units in layers[1:]:
-        #         model.add(keras.layers.Dense(units, activation=activation_hidden))
-
-
-        #     model.add(keras.layers.Dense(1, activation=activation_output))
-
         if self.architecture != "cnn":
             raise ValueError(f"Unsupported architecture: {self.architecture}")
     
         hp = self.hyperparameters.get("model", {})
         n_blocks     = hp.get("n_blocks", 2)
-        filters      = hp.get("filters", [64, 64])              # o un int
-        kernel_sizes = hp.get("kernel_sizes", [5, 3])           # o un int
-        dilations    = hp.get("dilations", 1)                   # int o lista
-        padding      = hp.get("padding", "same")                # "same" recomendado
-        pool_every   = hp.get("pool_every", 1)                  # p.ej. cada bloque
+        filters      = hp.get("filters", [64, 64])             
+        kernel_sizes = hp.get("kernel_sizes", [5, 3])           
+        dilations    = hp.get("dilations", 1)                  
+        padding      = hp.get("padding", "same")                
+        pool_every   = hp.get("pool_every", 1)                  
         pool_size    = hp.get("pool_size", 2)
         dropout      = hp.get("dropout", 0.0)
         l2_reg       = hp.get("l2", 0.0)
@@ -338,8 +285,8 @@ class ConvolutionalModel(KerasModel):
             y = keras.layers.Conv1D(
                 filters=filters[b],
                 kernel_size=kernel_sizes[b],
-                padding=padding,           # "same" evita colapsar el eje temporal
-                activation=None,           # activa después de BN/Dropout
+                padding=padding,           
+                activation=None,          
                 dilation_rate=dilations[b],
                 kernel_regularizer=reg,
             )(y)
@@ -454,35 +401,6 @@ class TransformerModel(KerasModel):
         Initialize the Keras model based on the specified architecture.
         """
 
-        # horizon = self.hyperparameters["input"]["horizon"]
-        # n_features = self.sources.size() // horizon # For each ticker we have horizon values, we need to divide by horizon to get the number of tickers
-        # num_heads = self.hyperparameters["model"].get("num_heads", 2)
-        # ff_dim = self.hyperparameters["model"].get("ff_dim", 64)
-        # dropout_rate = self.hyperparameters["model"].get("dropout", 0.1)
-        # activation_output = self.hyperparameters["topology"]["activation"]["output"]
-
-        # inputs = keras.Input(shape=(horizon, n_features))
-
-        # # Self-attention
-        # x = keras.layers.LayerNormalization()(inputs)
-        # attn_output = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=16)(x, x)
-        # x = keras.layers.Add()([x, attn_output])
-        # x = keras.layers.Dropout(dropout_rate)(x)
-        
-        # # Feedforward
-        # x2 = keras.layers.LayerNormalization()(x)
-        # x2 = keras.layers.Dense(ff_dim, activation="relu")(x2)
-        # x2 = keras.layers.Dense(ff_dim)(x2)
-        # x = keras.layers.Dense(ff_dim)(x)
-        # x = keras.layers.Add()([x, x2])         
-        # x = keras.layers.Dropout(dropout_rate)(x)
-        
-        # # Output
-        # x = keras.layers.Flatten()(x)
-        # outputs = keras.layers.Dense(1, activation=activation_output)(x)
-
-        # model = keras.Model(inputs=inputs, outputs=outputs)
-        # return model
         horizon    = self.hyperparameters["input"]["horizon"]
         n_features = self.sources.size() // horizon
 
@@ -502,12 +420,10 @@ class TransformerModel(KerasModel):
         inputs = keras.Input(shape=(horizon, n_features))
         x = inputs
 
-        # (opcional) proyección a una dimensión de trabajo
         proj_dim = mcfg.get("project_dim", None)
         if proj_dim is not None:
             x = keras.layers.Dense(int(proj_dim))(x)
 
-        # Bloques encoder
         for _ in range(n_blocks):
             # Pre-Norm + MultiHeadAttention
             y = keras.layers.LayerNormalization()(x)
@@ -530,10 +446,9 @@ class TransformerModel(KerasModel):
         else:
             x = keras.layers.Flatten()(x)
 
-        # Cabeza densa opcional
         for units in dense_head:
             x = keras.layers.Dense(units, activation=act_hidden)(x)
-            x = keras.layers.Dropout(dropout)(x)  # usa el mismo dropout del bloque
+            x = keras.layers.Dropout(dropout)(x)
 
         outputs = keras.layers.Dense(1, activation=act_out)(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
@@ -567,17 +482,3 @@ class KerasAdvancedModelFactory(ModelFactory):
         else:
             print(f"[ERROR] Unknown architecture for KerasAdvancedModelFactory: {self.architecture}")
             return None
-            #return KerasModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)
-
-
-# class KerasAdvancedModelFactory2(ModelFactory):
-#     """
-#     Crea modelos Keras avanzados (RNN, LSTM, CNN, Transformer) integrados con el sistema de predicción.
-#     """
-
-#     def create_model_from_descriptors(self, 
-#                                       model_id: str, 
-#                                       hyperparameters: dict, 
-#                                       input_descriptor: fd.DataDescriptor, 
-#                                       output_descriptor: fd.DataDescriptor):
-#         return KerasAdvancedModel(model_id, input_descriptor, output_descriptor, model=None, hyperparameters=hyperparameters)

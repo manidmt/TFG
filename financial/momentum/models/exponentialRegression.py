@@ -87,23 +87,23 @@ Test ExponentialRegressionModelFactory
 """
 
 if __name__ == "__main__":
-    print("Ejecutando prueba de ExponentialRegressionModelFactory...")
+    print("Testing ExponentialRegressionModelFactory...")
 
     import pandas as pd
 
-    # Datos de prueba (X = días, Y = precios)
-    X_train = pd.DataFrame({'dias': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
+    # Test data (X = days, Y = prices)
+    X_train = pd.DataFrame({'days': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
     y_train = pd.Series([100, 105, 110, 120, 130, 150, 170, 200, 240, 290])
 
-    # Crear modelo
+    # Create model
     factory = ExponentialRegressionModelFactory()
     model = factory.create_model_from_descriptors("exp_model", {}, None, None)
 
-    # Entrenar modelo
+    # Train model
     model.fit(X_train, y_train)
 
-    # Hacer una predicción
-    X_test = pd.DataFrame({'dias': [11, 12, 13, 14, 15]})
+    # Make a prediction
+    X_test = pd.DataFrame({'days': [11, 12, 13, 14, 15]})
     y_pred = model.predict(X_test)
 
-    print("Predicciones:", y_pred)
+    print("Predictions:", y_pred)
