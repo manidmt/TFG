@@ -110,26 +110,6 @@ def storeLocal_data(ticker,
     prediction_path = os.path.join(cache_path) #, f"model_momentum-{model_name}-{ticker}")
 
     store_results(cache_path, ticker, model_name, relative_predicted_values, slope_series, r2_series)
-    '''
-    with open(prediction_path, 'wb') as file:
-        pickle.dump(relative_predicted_values, file)
-    
-    if store_slope:
-        # Forzar actualizacion de la serie antes de guardarla
-        slope_series = slope_series.dropna()  # Eliminar valores NaN
-        slope_series = slope_series.copy()  # Asegurar que no es una vista de otra
-        slope_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@slope")
-        with open(slope_path, 'wb') as file:
-            pickle.dump(slope_series, file)
-    
-    if store_r2:
-        r2_series = r2_series.dropna()
-        r2_series = r2_series.copy()
-        r2_path = os.path.join(cache_path, f"model-momentum-{model_name}-{ticker}@r2")
-        with open(r2_path, 'wb') as file:
-            pickle.dump(r2_series, file)
-    
-    '''
     return relative_predicted_values
 
 
@@ -153,7 +133,7 @@ def store_results(cache_path: str, ticker: str, model_name: str, predictions: pd
         with open(r2_path, 'wb') as file:
             pickle.dump(r2_series, file)
 
-    # model/momentum/{model_name}/{ticker} no funcionaba --> cambio a -  ¿solución modificando el DataStore?
+
 
 
 def local_features(ds: fd.DataStore, ticker: str) -> fd.Set:
@@ -164,17 +144,6 @@ def local_features(ds: fd.DataStore, ticker: str) -> fd.Set:
     variable = fd.Variable(ticker)
     features.append(variable)
     return features
-
-
-
-'''
-def local_regression_features_wrapper(ds: fd.DataStore, ticker: str) -> fd.Set:
-    ''
-    Wrapper function to generate local regression features.
-    This is required by ModelFactory when creating a model.
-    ''
-    return local_regression_features(ds, ticker)
-'''
 
 
 def store_exponentialModel_data(ticker,
