@@ -93,9 +93,9 @@ def storeLocal_data(ticker,
 
         if store_r2:
             if index >= horizon:
-                X_train = pd.DataFrame(np.arange(-horizon + 1, 1).reshape(-1, 1))  # Generamos la matriz de días usados en la regresión
-                y_true = data.iloc[index: index + horizon]  # Valores reales usados en la regresión
-                y_pred = model.predict(X_train)  # Predicciones del modelo en los datos de entrenamiento
+                X_train = pd.DataFrame(np.arange(-horizon + 1, 1).reshape(-1, 1))
+                y_true = data.iloc[index: index + horizon]  
+                y_pred = model.predict(X_train)
 
                 
                 y_true_clean = y_true.dropna()
